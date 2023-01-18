@@ -1,4 +1,5 @@
 [workspace]
 members = [
-    "delta-radix-hal"
+    "delta-radix-hal",
+    "delta-radix-os",
 ]
