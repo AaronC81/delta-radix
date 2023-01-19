@@ -1,7 +1,7 @@
-use std::{io::{stdout, Write, Stdout, Stdin, stdin}, cell::RefCell, process::exit};
+use std::{io::{stdout, Write, Stdout, Stdin, stdin}, cell::RefCell, process::exit, time::Duration};
 
 use async_trait::async_trait;
-use delta_radix_hal::{Display, Keypad, Key, Hal};
+use delta_radix_hal::{Display, Keypad, Key, Hal, Time};
 use termion::{raw::{IntoRawMode, RawTerminal}, input::{TermRead, Keys}};
 
 pub struct SimDisplay {
@@ -70,6 +70,19 @@ impl SimKeypad {
     }
 }
 
+pub struct SimTime;
+
+impl SimTime {
+    fn new() -> Self { Self }
+}
+
+#[async_trait(?Send)]
+impl Time for SimTime {
+    async fn sleep(&self, dur: Duration) {
+        tokio::time::sleep(dur).await
+    }
+}
+
 #[async_trait(?Send)]
 impl Keypad for SimKeypad {
     async fn wait_key(&self) -> Key {
@@ -90,6 +103,7 @@ impl Keypad for SimKeypad {
 pub struct SimHal {
     display: SimDisplay,
     keypad: SimKeypad,
+    time: SimTime,
 }
 
 impl SimHal {
@@ -97,6 +111,7 @@ impl SimHal {
         Self {
             display: SimDisplay::new(),
             keypad: SimKeypad::new(),
+            time: SimTime::new(),
         }
     }
 }
@@ -104,10 +119,18 @@ impl SimHal {
 impl Hal for SimHal {
     type D = SimDisplay;
     type K = SimKeypad;
+    type T = SimTime;
 
     fn display(&self) -> &Self::D { &self.display }
     fn display_mut(&mut self) -> &mut Self::D { &mut self.display }
 
     fn keypad(&self) -> &Self::K { &self.keypad }
     fn keypad_mut(&mut self) -> &mut Self::K { &mut self.keypad }
+
+    fn time(&self) -> &Self::T { &self.time }
+    fn time_mut(&mut self) -> &mut Self::T { &mut self.time }
+
+    fn common_mut(&mut self) -> (&mut Self::D, &mut Self::K, &mut Self::T) {
+        (&mut self.display, &mut self.keypad, &mut self.time)
+    }
 }
