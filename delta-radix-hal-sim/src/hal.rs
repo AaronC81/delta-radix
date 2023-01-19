@@ -11,20 +11,38 @@ pub struct SimDisplay {
 }
 
 impl SimDisplay {
+    const ROWS: u8 = 4;
+    const COLS: u8 = 20;
+
     fn new() -> Self {
         let stdout = stdout().into_raw_mode().unwrap();
         Self { stdout, x: 0, y: 0 }
+    }
+
+    fn draw_border(&mut self) {
+        write!(self.stdout, "{}", termion::cursor::Goto(1, 1)).unwrap();
+        write!(self.stdout, "┌{}┐\r\n", str::repeat("─", Self::COLS as usize)).unwrap();
+        for _ in 0..Self::ROWS {
+            write!(self.stdout, "│{}│\r\n", str::repeat(" ", Self::COLS as usize)).unwrap();
+        }
+        write!(self.stdout, "└{}┘", str::repeat("─", Self::COLS as usize)).unwrap();
     }
 }
 
 impl Display for SimDisplay {
     fn init(&mut self) {
         write!(self.stdout, "{}", termion::clear::All).unwrap();
+        self.draw_border();
         self.set_position(0, 0);
         self.stdout.flush().unwrap();
     }
 
     fn print_char(&mut self, c: char) {
+        if self.x >= Self::COLS || self.y >= Self::ROWS {
+            panic!("position ({}, {}) is out-of-range", self.x, self.y)
+        }
+        self.x += 1;
+
         write!(self.stdout, "{}", c).unwrap();
         self.stdout.flush().unwrap();
     }
@@ -32,7 +50,8 @@ impl Display for SimDisplay {
     fn set_position(&mut self, x: u8, y: u8) {
         self.x = x;
         self.y = y;
-        write!(self.stdout, "{}", termion::cursor::Goto(x as u16 + 1, y as u16 + 1)).unwrap();
+        // +1 to make 1-indexed, +1 again to skip over the border
+        write!(self.stdout, "{}", termion::cursor::Goto(x as u16 + 2, y as u16 + 2)).unwrap();
     }
 
     fn get_position(&self) -> (u8, u8) {
