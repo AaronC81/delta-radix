@@ -31,6 +31,10 @@ impl SimDisplay {
 
 impl Display for SimDisplay {
     fn init(&mut self) {
+        self.clear();
+    }
+
+    fn clear(&mut self) {
         write!(self.stdout, "{}", termion::clear::All).unwrap();
         self.draw_border();
         self.set_position(0, 0);
