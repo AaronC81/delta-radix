@@ -2,4 +2,5 @@
 members = [
     "delta-radix-hal",
     "delta-radix-os",
+    "delta-radix-hal-sim",
 ]

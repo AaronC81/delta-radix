@@ -8,8 +8,7 @@ pub enum Key {
     Menu,
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 pub trait Keypad {
     async fn wait_key(&self) -> Key;
-    fn poll_key(&self) -> Option<Key>;
 }
