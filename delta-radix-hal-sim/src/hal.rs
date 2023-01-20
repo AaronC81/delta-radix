@@ -98,6 +98,15 @@ impl Keypad for SimKeypad {
                 TermKey::Char('x') => return Key::HexBase,
                 TermKey::Char('b') => return Key::BinaryBase,
 
+                TermKey::Char('+') => return Key::Add,
+                TermKey::Char('-') => return Key::Subtract,
+                TermKey::Char('*') => return Key::Multiply,
+                TermKey::Char('/') => return Key::Divide,
+
+                TermKey::Left => return Key::Left,
+                TermKey::Right => return Key::Right,
+                TermKey::Backspace => return Key::Delete,
+
                 TermKey::Char(' ') => return Key::Menu,
                 TermKey::Char('s') => return Key::Shift,
                 TermKey::Char('q') => panic!("exit"),

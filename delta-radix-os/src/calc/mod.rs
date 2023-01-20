@@ -42,16 +42,28 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
     fn draw_expression(&mut self) {
         let disp = self.hal.display_mut();
-        disp.set_position(0, 2);
 
+        // Draw expression
+        disp.set_position(0, 2);
         let mut chars_written = 0;
         for glyph in &self.glyphs {
             disp.print_char(glyph.to_char());
             chars_written += 1;
         }
-
         for _ in chars_written..20 {
             disp.print_char(' ');
+        }
+
+        // Draw cursor
+        disp.set_position(0, 1);
+        for i in 0..20 {
+            if i + 1 == self.cursor_pos {
+                disp.print_char('\\')
+            } else if i == self.cursor_pos {
+                disp.print_char('/')
+            } else {
+                disp.print_char(' ')
+            }
         }
     }
 
@@ -60,6 +72,31 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             Key::Digit(d) => self.insert_and_redraw(Glyph::Digit(d)),
             Key::HexBase => self.insert_and_redraw(Glyph::HexBase),
             Key::BinaryBase => self.insert_and_redraw(Glyph::BinaryBase),
+
+            Key::Add => self.insert_and_redraw(Glyph::Add),
+            Key::Subtract => self.insert_and_redraw(Glyph::Subtract),
+            Key::Multiply => self.insert_and_redraw(Glyph::Multiply),
+            Key::Divide => self.insert_and_redraw(Glyph::Divide),
+
+            Key::Left => {
+                if self.cursor_pos > 0 {
+                    self.cursor_pos -= 1;
+                    self.draw_expression();
+                }
+            },
+            Key::Right => {
+                if self.cursor_pos < self.glyphs.len() {
+                    self.cursor_pos += 1;
+                    self.draw_expression();
+                }
+            }
+            Key::Delete => {
+                if self.cursor_pos > 0 {
+                    self.cursor_pos -= 1;
+                    self.glyphs.remove(self.cursor_pos);
+                    self.draw_expression();
+                }
+            },
 
             Key::Shift => (),
             Key::Menu => (),

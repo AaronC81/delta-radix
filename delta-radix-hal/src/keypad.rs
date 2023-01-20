@@ -7,6 +7,15 @@ pub enum Key {
     Shift,
     Menu,
 
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+
+    Left,
+    Right,
+    Delete,
+
     HexBase,
     BinaryBase,
 }
