@@ -3,6 +3,7 @@ use std::{io::{stdout, Write, Stdout, Stdin, stdin}, cell::RefCell, process::exi
 use async_trait::async_trait;
 use delta_radix_hal::{Display, Keypad, Key, Hal, Time};
 use termion::{raw::{IntoRawMode, RawTerminal}, input::{TermRead, Keys}};
+use termion::event::Key as TermKey;
 
 pub struct SimDisplay {
     x: u8,
@@ -91,12 +92,15 @@ impl Time for SimTime {
 impl Keypad for SimKeypad {
     async fn wait_key(&self) -> Key {
         loop {
-            match self.keys.borrow_mut().next().unwrap().unwrap() {
-                termion::event::Key::Char(' ') => return Key::Menu,
-                termion::event::Key::Char('s') => return Key::Shift,
-                termion::event::Key::Char('q') => panic!("exit"),
-                termion::event::Key::Char(c) if c.is_digit(10)
+            match self.keys.borrow_mut().next().unwrap().unwrap() {                                
+                TermKey::Char(c) if c.is_digit(10)
                     => return Key::Digit(c.to_digit(10).unwrap() as u8),
+                TermKey::Char('x') => return Key::HexBase,
+                TermKey::Char('b') => return Key::BinaryBase,
+
+                TermKey::Char(' ') => return Key::Menu,
+                TermKey::Char('s') => return Key::Shift,
+                TermKey::Char('q') => panic!("exit"),
 
                 _ => (),
             };

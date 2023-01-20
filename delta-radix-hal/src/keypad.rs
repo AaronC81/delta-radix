@@ -6,6 +6,9 @@ pub enum Key {
     Digit(u8),
     Shift,
     Menu,
+
+    HexBase,
+    BinaryBase,
 }
 
 #[async_trait(?Send)]
