@@ -1,7 +1,7 @@
 #![no_std]
 extern crate alloc;
 
-mod calc;
+pub mod calc;
 
 use calc::CalculatorApplication;
 use delta_radix_hal::{Hal, Keypad, Display};

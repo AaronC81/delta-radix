@@ -4,6 +4,8 @@ use delta_radix_hal::{Hal, Display, Keypad, Key};
 mod glyph;
 use self::glyph::Glyph;
 
+pub mod num;
+
 pub struct CalculatorApplication<'h, H: Hal> {
     hal: &'h mut H,
     glyphs: Vec<Glyph>,
