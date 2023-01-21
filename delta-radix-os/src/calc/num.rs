@@ -51,8 +51,44 @@ impl FlexInt {
         Self::from_bits(&bits)
     }
 
-    pub fn from_decimal_string(s: &str, size: usize, signed: bool) -> (Self, bool) {
-        todo!() // TODO
+    /// Creates a new unsigned integer of a given size by parsing a string of decimal digits.
+    /// 
+    /// Only digits are permitted in the string; this will panic if other characters are
+    /// encountered.
+    /// 
+    /// Also returns a boolean indicating whether the digits overflow the given size.
+    /// 
+    /// ```rust
+    /// # use delta_radix_os::calc::num::FlexInt;
+    /// let (i_str, over) = FlexInt::from_decimal_string("1234", 16);
+    /// let i_num = FlexInt::from_int(1234, 16);
+    /// assert_eq!(i_str, i_num);
+    /// assert!(!over);
+    /// 
+    /// let (i_str, over) = FlexInt::from_decimal_string("260", 8);
+    /// let i_num = FlexInt::from_int(260 % 256, 8);
+    /// assert_eq!(i_str, i_num);
+    /// assert!(over);
+    /// ```
+    pub fn from_decimal_string(s: &str, size: usize) -> (Self, bool) {
+        let mut result = Self::new(size);
+        let ten = Self::from_int(10, size);
+        let mut overflow = false;
+
+        for c in s.chars() {
+            let (r, over) = result.multiply(&ten, false);
+            overflow = overflow || over;
+            result = r;
+
+            let (r, over) = result.add(&Self::from_int(
+                char::to_digit(c, 10).expect("invalid character") as u64,
+                size,
+            ), false);
+            overflow = overflow || over;
+            result = r;
+        }
+
+        (result, overflow)
     }
 
     /// Gets the bits of this number, least-significant first.
