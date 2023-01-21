@@ -1,4 +1,11 @@
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Base {
+    Decimal,
+    Hexadecimal,
+    Binary,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Glyph {
     Digit(u8),
 
@@ -7,8 +14,7 @@ pub enum Glyph {
     Multiply,
     Divide,
 
-    HexBase,
-    BinaryBase,
+    Base(Base),
 }
 
 impl Glyph {
@@ -21,8 +27,9 @@ impl Glyph {
             Glyph::Multiply => '×',
             Glyph::Divide => '÷',
 
-            Glyph::HexBase => 'x',
-            Glyph::BinaryBase => 'b',
+            Glyph::Base(Base::Hexadecimal) => 'x',
+            Glyph::Base(Base::Binary) => 'b',
+            Glyph::Base(Base::Decimal) => 'd',
         }
     }
 }
