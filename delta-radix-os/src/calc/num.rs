@@ -51,6 +51,10 @@ impl FlexInt {
         Self::from_bits(&bits)
     }
 
+    pub fn from_decimal_string(s: &str, size: usize, signed: bool) -> (Self, bool) {
+        todo!() // TODO
+    }
+
     /// Gets the bits of this number, least-significant first.
     pub fn bits(&self) -> &[bool] {
         &self.bits
@@ -113,6 +117,80 @@ impl FlexInt {
         Self::from_bits(&bits)
     }
 
+    /// Creates a clone of this number which has been extended with 0s to a particular number of
+    /// bits.
+    /// 
+    /// Panics if the new size is less than the current size.
+    /// 
+    /// ```rust
+    /// # use delta_radix_os::calc::num::FlexInt;
+    /// let pos = FlexInt::from_int(0b0101, 4);
+    /// let pos_ext = pos.zero_extend(8);
+    /// assert_eq!(pos_ext.bits(), &[true, false, true, false, false, false, false, false]);
+    /// 
+    /// let neg = FlexInt::from_int(0b1101, 4);
+    /// let neg_ext = neg.zero_extend(8);
+    /// assert_eq!(neg_ext.bits(), &[true, false, true, true, false, false, false, false]);
+    /// ```
+    pub fn zero_extend(&self, new_size: usize) -> Self {
+        if new_size < self.bits.len() {
+            panic!("cannot sign-extend to a lower size");
+        }
+
+        let mut bits = self.bits.clone();
+        while bits.len() < new_size {
+            bits.push(false);
+        }
+
+        Self::from_bits(&bits)
+    }
+
+    /// Extends a number by calling either [`sign_extend`] or [`zero_extend`], based on whether
+    /// `signed` is true or false respectively.
+    /// 
+    /// Panics if the new size is less than the current size.
+    pub fn extend(&self, new_size: usize, signed: bool) -> Self {
+        if signed {
+            self.sign_extend(new_size)
+        } else {
+            self.zero_extend(new_size)
+        }
+    }
+
+    /// Removes the most-significant bits from a number to reduce it to a given size.
+    /// 
+    /// Returns the shrinked number, and the count of (zero, one) bits removed.
+    /// 
+    /// Panics if the new size is greater than the current size.
+    /// 
+    /// ```rust
+    /// # use delta_radix_os::calc::num::FlexInt;
+    /// let pos = FlexInt::from_int(0b11100101, 8);
+    /// let (pos_ext, zeroes, ones) = pos.shrink(4);
+    /// assert_eq!(pos_ext.bits(), &[true, false, true, false]);
+    /// assert_eq!(zeroes, 1);
+    /// assert_eq!(ones, 3);
+    /// ```
+    pub fn shrink(&self, new_size: usize) -> (Self, usize, usize) {
+        if new_size > self.bits.len() {
+            panic!("cannot sign-extend to a greater size");
+        }
+
+        let mut bits = self.bits.clone();
+        let mut zero_count = 0;
+        let mut one_count = 0;
+
+        while bits.len() > new_size {
+            if bits.pop().unwrap() {
+                one_count += 1;
+            } else {
+                zero_count += 1;
+            }
+        }
+
+        (Self::from_bits(&bits), zero_count, one_count)
+    }
+
     /// Returns a clone of this integer with all of its bits flipped.
     pub fn invert(&self) -> FlexInt {
         Self::from_bits(&self.bits.iter().map(|b| !b).collect::<Vec<_>>())
@@ -150,8 +228,22 @@ impl FlexInt {
         Some(num)
     }
 
+    /// Returns a clone of this number which has been numerically negated iff the original number is
+    /// negative, assuming that this is being treated as signed.
+    /// 
+    /// If the number is the largest possible negative number, i.e. it has just the most-significant
+    /// bit set (0b1000...), then it is not possible to store the inverted number in the same number
+    /// of bits. In this case, `None` is returned instead.
+    pub fn abs(&self) -> Option<FlexInt> {
+        if self.is_negative() {
+            self.negate()
+        } else {
+            Some(self.clone())
+        }
+    }
+
     /// Adds one integer to another, and returns the result, plus a boolean indicating whether
-    /// overflow or underflow occurred.
+    /// overflow occurred.
     /// 
     /// Panics unless the two integers are the same size.
     /// 
@@ -192,9 +284,262 @@ impl FlexInt {
         (result, carry)
     }
 
+    /// Multiplies one integer to another, and returns the result, plus a boolean indicating whether
+    /// overflow occurred.
+    /// 
+    /// Multiplication must know whether the numbers being used should be treated as signed, as the
+    /// procedure involves extending the numbers, so it must be known whether zero-extension or
+    /// sign-extension should be used.
+    /// 
+    /// Panics unless the two integers are the same size.
+    /// 
+    /// ```rust
+    /// # use delta_radix_os::calc::num::FlexInt;
+    /// // Non-overflowing, unsigned
+    /// let a = FlexInt::from_int(11, 8);
+    /// let b = FlexInt::from_int(8, 8);
+    /// assert_eq!(a.multiply(&b, false), (FlexInt::from_int(11 * 8, 8), false));
+    /// 
+    /// // Overflowing, unsigned
+    /// let a = FlexInt::from_int(50, 8);
+    /// let b = FlexInt::from_int(6, 8);
+    /// assert_eq!(a.multiply(&b, false), (FlexInt::from_int((50 * 6) % 256, 8), true));
+    /// 
+    /// // Non-overflowing, signed
+    /// let a = FlexInt::from_int(11, 8);
+    /// let b = FlexInt::from_int(8, 8).negate().unwrap();
+    /// assert_eq!(a.multiply(&b, true), (FlexInt::from_int(11 * 8, 8).negate().unwrap(), false));
+    /// 
+    /// // Overflowing, signed
+    /// let a = FlexInt::from_int(50, 8);
+    /// let b = FlexInt::from_int(5, 8).negate().unwrap();
+    /// assert_eq!(a.multiply(&b, true), (FlexInt::from_int(6, 8), true));
+    /// ```
+    pub fn multiply(&self, other: &FlexInt, signed: bool) -> (FlexInt, bool) {
+        self.validate_size(other);
+
+        // Extend both numbers to twice their size
+        let a_ext = self.extend(self.size() * 2, signed);
+        let b_ext = other.extend(self.size() * 2, signed);
+
+        // Perform repeated addition
+        let mut overflow = false;
+        let mut result_ext = Self::new(self.size() * 2);
+        for (i, bit) in b_ext.bits.into_iter().enumerate() {
+            if bit {
+                let (res, over) = result_ext.add(&a_ext.unchecked_shift_left(i));
+                result_ext = res;
+                overflow = overflow || (over && !signed);
+            }
+        }
+
+        // Cut back down to size
+        let (result, cut_zeroes, cut_ones) = result_ext.shrink(self.size());
+        if signed {
+            // In a signed number, overflow has only occurred if a mixture of zeroes and ones were
+            // cut. If just ones were cut, then we've shrunk a negative number, and just zeroes a
+            // positive number
+            if cut_zeroes > 0 && cut_ones > 0 {
+                overflow = true;
+            }
+
+            // If ones were cut but the number is no longer negative, this is also invalid
+            // e.g.
+            //      \/ cut point
+            //   0b1110000 -> 0b10000    = valid, same signed number
+            //
+            //      \/ cut point
+            //   0b1100000 -> 0b00000    = invalid, different number
+            if cut_ones > 0 && !result.is_negative() {
+                overflow = true;
+            }
+        } else {
+            // In an unsigned number, overflow has occurred if any ones were cut
+            if cut_ones > 0 {
+                overflow = true;
+            }
+        }
+
+        (result, overflow)
+    }
+
+    /// Divides this integer by another, and returns the result, plus a boolean indicating whether
+    /// overflow occurred.
+    /// 
+    /// Division must know whether the numbers being used should be treated as signed.
+    /// 
+    /// Panics unless the two integers are the same size.
+    /// 
+    /// ```rust
+    /// # use delta_radix_os::calc::num::FlexInt;
+    /// let a = FlexInt::from_int(12, 8);
+    /// let b = FlexInt::from_int(3, 8);
+    /// assert_eq!(a.divide(&b, false), (FlexInt::from_int(4, 8), false));
+    /// ```
+    pub fn divide(&self, other: &FlexInt, signed: bool) -> (FlexInt, bool) {
+        self.validate_size(other);
+
+        let a;
+        let b;
+        let negate_result;
+        if signed {
+            // Two's complement division is probably really hard, so sign-extend the numbers by one
+            // bit, negate the negative ones to be positive, and keep track of whether we need to
+            // negate again at the end.
+            // The reason we sign-extend is so we don't overflow if negating the lowest possible
+            // negative
+            a = self.sign_extend(self.size() + 1).abs().expect("unexpected overflow while preparing division");
+            b = other.sign_extend(self.size() + 1).abs().expect("unexpected overflow while preparing division");
+            negate_result = self.is_negative() ^ other.is_negative();
+        } else {
+            a = self.clone();
+            b = other.clone();
+            negate_result = false;
+        }
+
+        if other.is_zero() {
+            // TODO handle better
+            panic!("divide by zero")
+        }
+
+        let mut quotient = FlexInt::new(a.size());
+        let mut remainder = FlexInt::new(a.size());
+        for (i, bit) in a.bits().iter().enumerate().rev() {
+            remainder = remainder.unchecked_shift_left(1);
+            *remainder.bit_mut(0) = *bit;
+
+            if remainder.is_greater_than_unsigned(&b) || remainder.equals(&b) {
+                let (rem, over) = remainder.subtract_unsigned(&b);
+                if over {
+                    panic!(
+                        "unexpected overflow during division when performing {} - {}",
+                        remainder.to_unsigned_decimal_string(),
+                        b.to_unsigned_decimal_string(),
+                    );
+                }
+                remainder = rem;
+                *quotient.bit_mut(i) = true;
+            }
+        }
+
+        if signed {
+            // Get the sign bit and then chop it off
+            // (Remember we sign-extended by one earlier)
+            let sign = quotient.is_negative();
+            (quotient, _, _) = quotient.shrink(quotient.size() - 1);
+
+            // Overflow is whether we've changed the sign
+            let overflow = sign != quotient.is_negative();
+            
+            // We also might need to negate the result - if this fails, report overflow too
+            if negate_result {
+                if let Some(r) = quotient.negate() {
+                    (r, overflow)
+                } else {
+                    (quotient, true)
+                }
+            } else {
+                (quotient, overflow)
+            }
+        } else {
+            (quotient, false)
+        }
+    }
+
+    /// Subtracts another unsigned integer from this one. Also returns a boolean indicating if
+    /// whether the number became negative, which would not be valid for an unsigned number.
+    /// 
+    /// Panics unless the two integers are the same size.
+    /// 
+    /// ```rust
+    /// # use delta_radix_os::calc::num::FlexInt;
+    /// let a = FlexInt::from_int(12, 8);
+    /// let b = FlexInt::from_int(3, 8);
+    /// assert_eq!(a.subtract_unsigned(&b), (FlexInt::from_int(9, 8), false));
+    /// ```
+    pub fn subtract_unsigned(&self, other: &FlexInt) -> (FlexInt, bool) {
+        // Intermediate functions return (difference, borrow)
+        fn half_sub(a: bool, b: bool) -> (bool, bool) { 
+            (a ^ b, !a && b)
+        }
+
+        fn full_sub(a: bool, b: bool, borrow: bool) -> (bool, bool) {
+            let (diff, borrow_intermediate_1) = half_sub(a, b);
+            let (diff, borrow_intermediate_2) = half_sub(diff, borrow);
+            (diff, borrow_intermediate_1 || borrow_intermediate_2)
+        }
+
+        self.validate_size(other);
+
+        let mut result = Self::new(self.size());
+        let (diff, mut borrow) = half_sub(self.bit(0), other.bit(0));
+        *result.bit_mut(0) = diff;
+
+        for (i, (a, b)) in self.bits.iter().zip(other.bits.iter()).enumerate().skip(1) {
+            let (diff, b) = full_sub(*a, *b, borrow);
+            borrow = b;
+
+            *result.bit_mut(i) = diff;
+        }
+
+        (result, borrow)
+    }
+
     /// Whether this number is zero.
     pub fn is_zero(&self) -> bool {
         self.bits.iter().all(|b| !*b)
+    }
+
+    /// Whether this number is negative, assuming it is being treated as signed.
+    pub fn is_negative(&self) -> bool {
+        // Most-significant bit is sign
+        self.bit(self.size() - 1)
+    }
+
+    /// Whether this number is strictly greater than other, assuming that both numbers are unsigned.
+    /// 
+    /// Panics unless the two integers are the same size.
+    /// 
+    /// ```rust
+    /// # use delta_radix_os::calc::num::FlexInt;
+    /// let a = FlexInt::from_int(12, 8);
+    /// let b = FlexInt::from_int(3, 8);
+    /// assert_eq!(a.is_greater_than_unsigned(&b), true);
+    /// assert_eq!(b.is_greater_than_unsigned(&a), false);
+    /// ```
+    pub fn is_greater_than_unsigned(&self, other: &FlexInt) -> bool {
+        self.validate_size(other);
+
+        // Iterate over bits from most- to least-significant
+        for (self_bit, other_bit) in self.bits().iter().zip(other.bits().iter()).rev() {
+            match (*self_bit, *other_bit) {
+                (true, false) => return true,
+                (false, true) => return false,
+                _ => (),
+            }
+        }
+
+        // They're equal!
+        false
+    }
+
+    /// Whether this number equals another.
+    /// 
+    /// Panics unless the two integers are the same size.
+    /// 
+    /// ```rust
+    /// # use delta_radix_os::calc::num::FlexInt;
+    /// let a = FlexInt::from_int(12, 8);
+    /// let b = FlexInt::from_int(12, 8);
+    /// assert_eq!(a.equals(&b), true);
+    /// assert_eq!(b.equals(&a), true);
+    /// 
+    /// let c = FlexInt::from_int(11, 8);
+    /// assert_eq!(a.equals(&c), false);
+    /// ```
+    pub fn equals(&self, other: &FlexInt) -> bool {
+        self.validate_size(other);
+        self.bits == other.bits
     }
 
     /// Converts this number into a string of decimal digits, treating it as unsigned.
@@ -278,5 +623,14 @@ impl FlexInt {
         } else {
             return false
         }
+    }
+
+    fn unchecked_shift_left(&self, amount: usize) -> Self {
+        let mut bits = self.bits.clone();
+        for _ in 0..amount {
+            bits.insert(0, false);
+            bits.pop();
+        }
+        Self::from_bits(&bits)
     }
 }
