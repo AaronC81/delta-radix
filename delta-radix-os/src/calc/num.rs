@@ -221,7 +221,7 @@ impl FlexInt {
             return None
         }
 
-        let (num, over) = self.invert().add(&Self::new_one(self.size()));
+        let (num, over) = self.invert().add(&Self::new_one(self.size()), false);
         if over {
             panic!("overflow not expected during negation")
         }
@@ -249,17 +249,27 @@ impl FlexInt {
     /// 
     /// ```rust
     /// # use delta_radix_os::calc::num::FlexInt;
-    /// // Non-overflowing
+    /// // Non-overflowing, unsigned
     /// let a = FlexInt::from_int(0b0110, 4);
     /// let b = FlexInt::from_int(0b0011, 4);
-    /// assert_eq!(a.add(&b), (FlexInt::from_int(0b1001, 4), false));
+    /// assert_eq!(a.add(&b, false), (FlexInt::from_int(0b1001, 4), false));
     /// 
-    /// // Overflowing
+    /// // Overflowing, unsigned
     /// let a = FlexInt::from_int(0b1110, 4);
     /// let b = FlexInt::from_int(0b0011, 4);
-    /// assert_eq!(a.add(&b), (FlexInt::from_int(0b0001, 4), true));
+    /// assert_eq!(a.add(&b, false), (FlexInt::from_int(0b0001, 4), true));
+    /// 
+    /// // Non-overflowing, signed
+    /// let a = FlexInt::from_int(0b1110, 4);
+    /// let b = FlexInt::from_int(0b0011, 4);
+    /// assert_eq!(a.add(&b, true), (FlexInt::from_int(0b0001, 4), false));
+    /// 
+    /// // Overflowing, signed
+    /// let a = FlexInt::from_int(0b0110, 4);
+    /// let b = FlexInt::from_int(0b0011, 4);
+    /// assert_eq!(a.add(&b, true), (FlexInt::from_int(0b1001, 4), true));
     /// ```
-    pub fn add(&self, other: &FlexInt) -> (FlexInt, bool) {
+    pub fn add(&self, other: &FlexInt, signed: bool) -> (FlexInt, bool) {
         self.validate_size(other);
 
         let mut result = FlexInt::new(self.size());
@@ -281,7 +291,10 @@ impl FlexInt {
             carry = cry;
         }
 
-        (result, carry)
+        let started_negative = self.is_negative();
+        let ended_negative = result.is_negative();
+
+        (result, if signed { !started_negative && ended_negative } else { carry })
     }
 
     /// Multiplies one integer to another, and returns the result, plus a boolean indicating whether
@@ -327,7 +340,7 @@ impl FlexInt {
         let mut result_ext = Self::new(self.size() * 2);
         for (i, bit) in b_ext.bits.into_iter().enumerate() {
             if bit {
-                let (res, over) = result_ext.add(&a_ext.unchecked_shift_left(i));
+                let (res, over) = result_ext.add(&a_ext.unchecked_shift_left(i), false);
                 result_ext = res;
                 overflow = overflow || (over && !signed);
             }
