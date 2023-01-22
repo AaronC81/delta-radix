@@ -2,7 +2,7 @@ use alloc::{vec::Vec, vec};
 use delta_radix_hal::{Hal, Display, Keypad, Key};
 
 mod glyph;
-use self::{glyph::{Glyph, Base}, eval::{EvaluationResult, Configuration, DataType}, parse::{Parser, Node, ParserError}};
+use self::{glyph::{Glyph, Base}, eval::{EvaluationResult, Configuration, DataType, evaluate}, parse::{Parser, Node, ParserError}};
 
 pub mod num;
 
@@ -14,7 +14,7 @@ pub struct CalculatorApplication<'h, H: Hal> {
     glyphs: Vec<Glyph>,
     cursor_pos: usize,
     eval_config: Configuration,
-    eval_result: Option<EvaluationResult>,
+    eval_result: Option<Result<EvaluationResult, ParserError>>,
 }
 
 impl<'h, H: Hal> CalculatorApplication<'h, H> {
@@ -46,6 +46,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         self.hal.display_mut().clear();
         self.draw_header();
         self.draw_expression();
+        self.draw_result();
     }
     
     fn draw_header(&mut self) {
@@ -91,6 +92,27 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         }
     }
 
+    fn draw_result(&mut self) {
+        let disp = self.hal.display_mut();
+
+        disp.set_position(0, 3);
+        if let Some(result) = &self.eval_result {
+            match result {
+                Ok(result) => {
+                    let str = if self.eval_config.data_type.signed {
+                        todo!("unsigned string not implemented")
+                    } else {
+                        result.result.to_unsigned_decimal_string()
+                    };
+                    disp.print_string(&str);
+                },
+                Err(_) => disp.print_string("parse error"),
+            }
+        } else {
+            disp.print_string(&str::repeat(" ", 20));
+        }
+    }
+
     fn process_input_and_redraw(&mut self, key: Key) {
         match key {
             Key::Digit(d) => self.insert_and_redraw(Glyph::Digit(d)),
@@ -119,8 +141,13 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                     self.cursor_pos -= 1;
                     self.glyphs.remove(self.cursor_pos);
                     self.draw_expression();
+                    self.clear_evaluation();
                 }
             },
+            Key::Exe => {
+                self.evaluate();
+                self.draw_result();
+            }
 
             Key::Shift => (),
             Key::Menu => (),
@@ -131,11 +158,22 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         self.glyphs.insert(self.cursor_pos, glyph);
         self.cursor_pos += 1;
         self.draw_expression();
+        self.clear_evaluation();
     }
 
     fn parse(&self) -> (Parser, Result<Node, ParserError>) {
         let mut parser = Parser::new(&self.glyphs, self.eval_config);
         let result = parser.parse();
         (parser, result)
+    }
+
+    fn evaluate(&mut self) {
+        let (_, node) = self.parse();
+        self.eval_result = Some(node.map(|node| evaluate(&node, &self.eval_config)))
+    }
+
+    fn clear_evaluation(&mut self) {
+        self.eval_result = None;
+        self.draw_result();
     }
 }

@@ -13,8 +13,8 @@ pub struct DataType {
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct EvaluationResult {
-    result: FlexInt,
-    overflow: bool,
+    pub result: FlexInt,
+    pub overflow: bool,
 }
 
 impl EvaluationResult {

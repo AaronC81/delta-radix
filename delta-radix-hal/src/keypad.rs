@@ -6,6 +6,7 @@ pub enum Key {
     Digit(u8),
     Shift,
     Menu,
+    Exe,
 
     Add,
     Subtract,

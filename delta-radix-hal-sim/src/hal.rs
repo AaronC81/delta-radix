@@ -106,6 +106,7 @@ impl Keypad for SimKeypad {
                 TermKey::Left => return Key::Left,
                 TermKey::Right => return Key::Right,
                 TermKey::Backspace => return Key::Delete,
+                TermKey::Char('\n') => return Key::Exe,
 
                 TermKey::Char(' ') => return Key::Menu,
                 TermKey::Char('s') => return Key::Shift,

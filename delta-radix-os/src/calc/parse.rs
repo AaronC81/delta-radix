@@ -2,7 +2,7 @@ use core::ops::Range;
 
 use alloc::{vec, vec::Vec, string::String, boxed::Box};
 
-use super::{num::FlexInt, glyph::Glyph, eval};
+use super::{num::FlexInt, glyph::{Glyph, Base}, eval};
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct GlyphSpan {
@@ -89,11 +89,11 @@ impl<'g> Parser<'g> {
 
             // Gather digits
             loop {
-                let glyph = self.here();
-                self.advance();
-
-                match glyph {
-                    Some(Glyph::Digit(d)) => digits.push(char::from_digit(d as u32, 10).unwrap()),
+                match self.here() {
+                    Some(Glyph::Digit(d)) => {
+                        digits.push(char::from_digit(d as u32, 10).unwrap());
+                        self.advance();
+                    },
                     _ => break,
                 }
             }
@@ -109,11 +109,14 @@ impl<'g> Parser<'g> {
 
             // Construct string of digits and parse number
             let str: String = digits.into_iter().collect();
-            let (num, overflow) = FlexInt::from_decimal_string(&str, self.eval_config.data_type.bits);
+            let (num, overflow) = match base {
+                Some(Base::Decimal) | None => FlexInt::from_decimal_string(&str, self.eval_config.data_type.bits),
+                _ => todo!("base not yet implemented"),
+            };
 
             // Add warning region of number parsing overflowed
             let span = GlyphSpan {
-                start: self.ptr - str.len() - 1,
+                start: self.ptr - str.len(),
                 length: str.len(),
             };
             if overflow {
