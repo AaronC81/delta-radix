@@ -59,7 +59,7 @@ impl Display for SimDisplay {
         write!(self.stdout, "{}", termion::cursor::Goto(x as u16 + 2, y as u16 + 2)).unwrap();
     }
 
-    fn get_position(&self) -> (u8, u8) {
+    fn get_position(&mut self) -> (u8, u8) {
         (self.x, self.y)
     }
 }
@@ -83,7 +83,7 @@ impl SimTime {
 
 #[async_trait(?Send)]
 impl Time for SimTime {
-    async fn sleep(&self, dur: Duration) {
+    async fn sleep(&mut self, dur: Duration) {
         tokio::time::sleep(dur).await
     }
 }

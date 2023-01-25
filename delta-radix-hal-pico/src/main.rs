@@ -7,12 +7,20 @@ use core::panic::PanicInfo;
 
 use alloc_cortex_m::CortexMHeap;
 use cortex_m_rt::entry;
+use delta_radix_hal::{Hal, Display};
 use embedded_hal::digital::v2::OutputPin;
+use hal::PicoHal;
 use hd44780_driver::{HD44780, Cursor};
 use rp_pico::{hal::{Timer, Watchdog, Sio, clocks::init_clocks_and_plls, Clock}, pac, Pins};
 use embedded_time::{fixed_point::FixedPoint, rate::Extensions};
 
 extern crate alloc;
+
+mod hal;
+
+fn lives_forever<T: ?Sized>(t: &mut T) -> &'static mut T {
+    unsafe { (t as *mut T).as_mut().unwrap() }
+}
 
 #[global_allocator]
 static ALLOCATOR: CortexMHeap = CortexMHeap::empty();
@@ -68,10 +76,15 @@ fn main() -> ! {
     let d7 = pins.gpio6.into_push_pull_output();
     
     let mut lcd = HD44780::new_4bit(rs, en, d4, d5, d6, d7, &mut delay).unwrap();
-    lcd.set_cursor_visibility(Cursor::Invisible, &mut delay);
-    lcd.clear(&mut delay);
-    lcd.set_cursor_pos(0, &mut delay);
-    lcd.write_str("Hello!", &mut delay);
+
+    let mut hal = PicoHal {
+        display: hal::LcdDisplay { lcd, delay: lives_forever(&mut delay) },
+        keypad: hal::ButtonMatrix,
+        time: hal::DelayTime { delay: lives_forever(&mut delay) },
+    };
+
+    let rt = nostd_async::Runtime::new();
+    nostd_async::Task::new(delta_radix_os::main(hal)).spawn(&rt).join();
     
     loop {
         led.set_high().unwrap();

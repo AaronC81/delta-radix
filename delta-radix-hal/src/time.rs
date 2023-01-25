@@ -5,5 +5,5 @@ use alloc::boxed::Box;
 
 #[async_trait(?Send)]
 pub trait Time {
-    async fn sleep(&self, dur: Duration);
+    async fn sleep(&mut self, dur: Duration);
 }
