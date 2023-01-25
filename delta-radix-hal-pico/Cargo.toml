@@ -1,0 +1,28 @@
+[package]
+name = "delta-radix-hal-pico"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Other projects in workspace
+delta-radix-hal = { path = "../delta-radix-hal" }
+delta-radix-os = { path = "../delta-radix-os" }
+
+# Core embedded traits
+embedded-hal = { version = "0.2.5", features = ["unproven"] }
+embedded-time = "0.12.0"
+
+# Pico implementations of embedded traits
+cortex-m = "0.7.3"
+cortex-m-rt = "0.7.0"
+alloc-cortex-m = "0.4.2"
+rp-pico = "0.3.0"
+
+# Logging - other crates moan if we don't include these
+defmt = "0.3.0"
+defmt-rtt = "0.3.0"
+
+# Drivers
+hd44780-driver = "0.4.0"
