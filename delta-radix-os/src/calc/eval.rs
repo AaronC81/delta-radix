@@ -1,3 +1,5 @@
+use alloc::{format, string::String};
+
 use super::{num::FlexInt, parse::{Node, NodeKind}};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -9,6 +11,12 @@ pub struct Configuration {
 pub struct DataType {
     pub bits: usize,
     pub signed: bool,
+}
+
+impl DataType {
+    pub fn concise_name(&self) -> String {
+        format!("{}{}", if self.signed { "S" } else { "U" }, self.bits)
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]

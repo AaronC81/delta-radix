@@ -15,6 +15,7 @@ pub struct CalculatorApplication<'h, H: Hal> {
     cursor_pos: usize,
     eval_config: Configuration,
     eval_result: Option<Result<EvaluationResult, ParserError>>,
+    constant_overflows: bool,
 }
 
 impl<'h, H: Hal> CalculatorApplication<'h, H> {
@@ -25,11 +26,12 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             cursor_pos: 0,
             eval_config: Configuration {
                 data_type: DataType {
-                    bits: 32,
+                    bits: 16,
                     signed: false,
                 }
             },
             eval_result: None,
+            constant_overflows: false,
         }
     }
 
@@ -52,7 +54,28 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
     fn draw_header(&mut self) {
         let disp = self.hal.display_mut();
         disp.set_position(0, 0);
-        disp.print_string("U32 ============ 50%");
+
+        let name = self.eval_config.data_type.concise_name();
+        disp.print_string(&name);
+        disp.print_char(' ');
+
+        let has_overflow = if let Some(Ok(r)) = &self.eval_result {
+            r.overflow || self.constant_overflows
+        } else {
+            false
+        };
+        let overflow_marker = " OVER";
+
+        let mut ptr = name.len() + 1;
+        let ptr_target = if has_overflow { 20 - overflow_marker.len() } else { 20 };
+        while ptr < ptr_target {
+            disp.print_char('=');
+            ptr += 1;
+        }
+
+        if has_overflow {
+            disp.print_string(overflow_marker);
+        }
     }
 
     fn draw_expression(&mut self) {
@@ -61,6 +84,8 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         let warning_indices = parser.constant_overflow_spans.iter()
             .map(|s| s.indices().collect::<Vec<_>>())
             .flatten().collect::<Vec<_>>();
+
+        self.constant_overflows = !warning_indices.is_empty();
         
         let disp = self.hal.display_mut();
 
@@ -147,6 +172,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             Key::Exe => {
                 self.evaluate();
                 self.draw_result();
+                self.draw_header();
             }
 
             Key::Shift => (),
@@ -175,5 +201,6 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
     fn clear_evaluation(&mut self) {
         self.eval_result = None;
         self.draw_result();
+        self.draw_header();
     }
 }
