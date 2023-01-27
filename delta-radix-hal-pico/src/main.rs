@@ -6,15 +6,13 @@
 
 use core::panic::PanicInfo;
 
-use alloc::format;
 use alloc_cortex_m::CortexMHeap;
 use cortex_m_rt::entry;
-use delta_radix_hal::{Hal, Display};
 use embedded_hal::digital::v2::OutputPin;
 use hal::PicoHal;
-use hd44780_driver::{HD44780, Cursor};
-use rp_pico::{hal::{Timer, Watchdog, Sio, clocks::init_clocks_and_plls, Clock}, pac, Pins};
-use embedded_time::{fixed_point::FixedPoint, rate::Extensions};
+use hd44780_driver::HD44780;
+use rp_pico::{hal::{Watchdog, Sio, clocks::init_clocks_and_plls, Clock}, pac, Pins};
+use embedded_time::{fixed_point::FixedPoint};
 
 extern crate alloc;
 
@@ -42,7 +40,7 @@ fn main() -> ! {
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
     let mut watchdog = Watchdog::new(pac.WATCHDOG);
-    let mut sio = Sio::new(pac.SIO);
+    let sio = Sio::new(pac.SIO);
 
     // External high-speed crystal on the pico board is 12Mhz
     let external_xtal_freq_hz = 12_000_000u32;
@@ -59,7 +57,6 @@ fn main() -> ! {
         .unwrap();
 
     let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().integer());
-    let timer = Timer::new(pac.TIMER, &mut pac.RESETS);
 
     let pins = Pins::new(
         pac.IO_BANK0,
@@ -77,9 +74,9 @@ fn main() -> ! {
     let d6 = pins.gpio7.into_push_pull_output();
     let d7 = pins.gpio6.into_push_pull_output();
     
-    let mut lcd = HD44780::new_4bit(rs, en, d4, d5, d6, d7, &mut delay).unwrap();
+    let lcd = HD44780::new_4bit(rs, en, d4, d5, d6, d7, &mut delay).unwrap();
 
-    let mut hal = PicoHal {
+    let hal = PicoHal {
         display: hal::LcdDisplay { lcd, delay: lives_forever(&mut delay) },
         keypad: hal::ButtonMatrix {
             delay: lives_forever(&mut delay),
@@ -112,6 +109,6 @@ fn main() -> ! {
 }
 
 #[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
+fn panic(_: &PanicInfo) -> ! {
     loop {}
 }

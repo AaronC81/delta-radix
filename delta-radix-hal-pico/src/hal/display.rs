@@ -41,25 +41,25 @@ impl<'d> LcdDisplay<'d> {
 impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
     fn init(&mut self) {
         self.clear();
-        self.lcd.set_cursor_visibility(Cursor::Invisible, self.delay);
-        self.lcd.set_cursor_blink(CursorBlink::Off, self.delay);
+        self.lcd.set_cursor_visibility(Cursor::Invisible, self.delay).unwrap();
+        self.lcd.set_cursor_blink(CursorBlink::Off, self.delay).unwrap();
         self.set_position(0, 0);
     }
 
     fn clear(&mut self) {
-        self.lcd.clear(self.delay);
+        self.lcd.clear(self.delay).unwrap();
     }
 
     fn print_char(&mut self, c: char) {
-        self.lcd.write_char(c, self.delay);
+        self.lcd.write_char(c, self.delay).unwrap();
     }
 
     fn print_string(&mut self, s: &str) {
-        self.lcd.write_str(s, self.delay);
+        self.lcd.write_str(s, self.delay).unwrap();
     }
 
     fn set_position(&mut self, x: u8, y: u8) {
-        self.lcd.set_cursor_pos(Self::CURSOR_LINE_OFFSETS[y as usize] + x, self.delay);
+        self.lcd.set_cursor_pos(Self::CURSOR_LINE_OFFSETS[y as usize] + x, self.delay).unwrap();
     }
 
     fn get_position(&mut self) -> (u8, u8) {
@@ -71,9 +71,9 @@ impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
     fn print_cursor_left(&mut self) {
         // Override default - HD44780 character set renders \ as Yen symbol, and there is no
         // backslash anywhere in the character set!
-        self.lcd.write_byte(0b10100100, self.delay);
+        self.lcd.write_byte(0b10100100, self.delay).unwrap();
     }
     fn print_cursor_right(&mut self) {
-        self.lcd.write_byte(0b11011010, self.delay);
+        self.lcd.write_byte(0b11011010, self.delay).unwrap();
     }
 }

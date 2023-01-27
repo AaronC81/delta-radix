@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use cortex_m::delay::Delay;
 use delta_radix_hal::Key;
 use embedded_hal::digital::v2::{InputPin, OutputPin};
-use rp_pico::hal::gpio::{bank0::{Gpio15, Gpio16, Gpio17, Gpio18, Gpio19, Gpio20, Gpio21, Gpio22, Gpio23, Gpio26, Gpio27, Gpio28}, Pin, Input, PullUp, Output, PushPull};
+use rp_pico::hal::gpio::{bank0::{Gpio15, Gpio16, Gpio17, Gpio18, Gpio19, Gpio20, Gpio21, Gpio22, Gpio26, Gpio27, Gpio28}, Pin, Input, PullUp, Output, PushPull};
 
 type Col0 = Gpio15;
 type Col1 = Gpio16;
@@ -59,13 +59,13 @@ impl<'d> ButtonMatrix<'d> {
 
         // Set all rows high
         for row in rows.iter_mut() {
-            row.set_high();
+            row.set_high().unwrap();
         }
 
         // Iterate over each row...
         for (r, row) in rows.iter_mut().enumerate() {
             // Set it low
-            row.set_low();
+            row.set_low().unwrap();
 
             // Check each column - if it's low, the button was pressed!
             for (c, col) in cols.iter_mut().enumerate() {
@@ -75,7 +75,7 @@ impl<'d> ButtonMatrix<'d> {
             }
 
             // Put it back to high
-            row.set_high();
+            row.set_high().unwrap();
         }
 
         // Nothing pressed
