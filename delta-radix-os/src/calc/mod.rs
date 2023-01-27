@@ -79,9 +79,9 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         disp.set_position(0, 1);
         for i in 0..20 {
             if i + 1 == self.cursor_pos {
-                disp.print_char('\\')
+                disp.print_cursor_left()
             } else if i == self.cursor_pos {
-                disp.print_char('/')
+                disp.print_cursor_right()
             } else {
                 if warning_indices.contains(&i) {
                     disp.print_char('!')

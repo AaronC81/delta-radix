@@ -66,4 +66,14 @@ impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
         // TODO
         (0, 0)
     }
+
+    // Looks *very, very* vaguely like a cursor
+    fn print_cursor_left(&mut self) {
+        // Override default - HD44780 character set renders \ as Yen symbol, and there is no
+        // backslash anywhere in the character set!
+        self.lcd.write_byte(0b10100100, self.delay);
+    }
+    fn print_cursor_right(&mut self) {
+        self.lcd.write_byte(0b11011010, self.delay);
+    }
 }

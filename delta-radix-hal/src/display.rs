@@ -12,4 +12,9 @@ pub trait Display {
             self.print_char(c)
         }
     }
+
+    // These exist because the HD44780 character set shows \ as the Yen symbol, so we need to handle
+    // it specially!
+    fn print_cursor_left(&mut self) { self.print_char('\\') }
+    fn print_cursor_right(&mut self) { self.print_char('/') }
 }
