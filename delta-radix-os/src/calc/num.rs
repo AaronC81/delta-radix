@@ -91,6 +91,65 @@ impl FlexInt {
         (result, overflow)
     }
 
+    /// Creates a new unsigned integer of a given size by parsing a string of hexadecimal digits.
+    /// 
+    /// Only hexadecimal are permitted in the string; this will panic if other characters are
+    /// encountered.
+    /// 
+    /// Also returns a boolean indicating whether the digits overflow the given size.
+    /// 
+    /// ```rust
+    /// # use delta_radix_os::calc::num::FlexInt;
+    /// let (i_str, over) = FlexInt::from_hex_string("12A4", 16);
+    /// let i_num = FlexInt::from_int(0x12A4, 16);
+    /// assert_eq!(i_str, i_num);
+    /// assert!(!over);
+    /// 
+    /// let (i_str, over) = FlexInt::from_hex_string("12A4", 8);
+    /// let i_num = FlexInt::from_int(0xA4, 8);
+    /// assert_eq!(i_str, i_num);
+    /// assert!(over);
+    /// ```
+    pub fn from_hex_string(s: &str, size: usize) -> (Self, bool) {
+        let mut result = Self::new(size);
+        let mut overflow = false;
+
+        for c in s.chars() {
+            // Shift left by 4 - if any of the bits that this will truncate are 1s, then overflow
+            // has occurred
+            let (new_result, shifted_bits) = result.pop_shift_left(4);
+            result = new_result;
+            if shifted_bits.contains(&true) {
+                overflow = true;
+            }
+
+            // Insert bits of hexadecimal digit
+            let bits = match c {
+                // LSB -> MSB
+                '0'       => [false, false, false, false],
+                '1'       => [true,  false, false, false],
+                '2'       => [false, true,  false, false],
+                '3'       => [true,  true,  false, false],
+                '4'       => [false, false, true,  false],
+                '5'       => [true,  false, true,  false],
+                '6'       => [false, true,  true,  false],
+                '7'       => [true,  true,  true,  false],
+                '8'       => [false, false, false, true ],
+                '9'       => [true,  false, false, true ],
+                'A' | 'a' => [false, true,  false, true ],
+                'B' | 'b' => [true,  true,  false, true ],
+                'C' | 'c' => [false, false, true,  true ],
+                'D' | 'd' => [true,  false, true,  true ],
+                'E' | 'e' => [false, true,  true,  true ],
+                'F' | 'f' => [true,  true,  true,  true ],
+                _ => panic!("invalid character"),
+            };
+            result.bits.splice(0..4, bits);
+        }
+
+        (result, overflow)
+    }
+
     /// Gets the bits of this number, least-significant first.
     pub fn bits(&self) -> &[bool] {
         &self.bits
@@ -674,12 +733,18 @@ impl FlexInt {
         }
     }
 
-    fn unchecked_shift_left(&self, amount: usize) -> Self {
+    fn pop_shift_left(&self, amount: usize) -> (Self, Vec<bool>) {
         let mut bits = self.bits.clone();
+        let mut popped = vec![];
         for _ in 0..amount {
             bits.insert(0, false);
-            bits.pop();
+            popped.push(bits.pop().unwrap());
         }
-        Self::from_bits(&bits)
+        (Self::from_bits(&bits), popped)
+    }
+
+    fn unchecked_shift_left(&self, amount: usize) -> Self {
+        let (n, _) = self.pop_shift_left(amount);
+        n
     }
 }

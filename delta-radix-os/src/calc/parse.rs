@@ -78,6 +78,7 @@ impl<'g> Parser<'g> {
 
     fn parse_bottom(&mut self) -> Result<Node, ParserError> {
         if let Some(Glyph::Digit(_) | Glyph::Base(_)) = self.here() {
+            let start = self.ptr;
             let mut digits = vec![];
             let mut base = None;
 
@@ -111,14 +112,13 @@ impl<'g> Parser<'g> {
             let str: String = digits.into_iter().collect();
             let (num, overflow) = match base {
                 Some(Base::Decimal) | None => FlexInt::from_decimal_string(&str, self.eval_config.data_type.bits),
+                Some(Base::Hexadecimal) => FlexInt::from_hex_string(&str, self.eval_config.data_type.bits),
                 _ => todo!("base not yet implemented"),
             };
 
             // Add warning region of number parsing overflowed
-            let span = GlyphSpan {
-                start: self.ptr - str.len(),
-                length: str.len(),
-            };
+            let length = self.ptr - start;
+            let span = GlyphSpan { start, length };
             if overflow {
                 self.constant_overflow_spans.push(span);
             }
