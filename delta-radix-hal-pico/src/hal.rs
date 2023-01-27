@@ -14,8 +14,8 @@ type LcdD5 = Gpio8;
 type LcdD6 = Gpio7;
 type LcdD7 = Gpio6;
 
-// TODO: Write own LCD driver... position setting appears to be weird on this one, and I need
-// custom characters which this doesn't support
+// TODO: Need to support custom characters at some point
+
 pub struct LcdDisplay<'d> {
     pub delay: &'d mut Delay,
     pub lcd: HD44780<
@@ -28,6 +28,19 @@ pub struct LcdDisplay<'d> {
             Pin<LcdD7, Output<PushPull>>,
         >
     >
+}
+
+impl<'d> LcdDisplay<'d> {
+    /// The absolute cursor position at which each line starts.
+    const CURSOR_LINE_OFFSETS: [u8; 4] = [
+        // Yeah... I don't know why they're like this? I assume the 0x00 and 0x40 are for
+        // compatibility with 2x16 displays, but uhh
+        // These were just found by the Power of Guessing
+        0x00,
+        0x40,
+        0x14,
+        0x54,
+    ];
 }
 
 impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
@@ -51,7 +64,7 @@ impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
     }
 
     fn set_position(&mut self, x: u8, y: u8) {
-        self.lcd.set_cursor_pos(y * 40 + x, self.delay);
+        self.lcd.set_cursor_pos(Self::CURSOR_LINE_OFFSETS[y as usize] + x, self.delay);
     }
 
     fn get_position(&mut self) -> (u8, u8) {
