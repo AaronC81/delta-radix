@@ -23,5 +23,5 @@ pub enum Key {
 
 #[async_trait(?Send)]
 pub trait Keypad {
-    async fn wait_key(&self) -> Key;
+    async fn wait_key(&mut self) -> Key;
 }

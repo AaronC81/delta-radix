@@ -90,7 +90,7 @@ impl Time for SimTime {
 
 #[async_trait(?Send)]
 impl Keypad for SimKeypad {
-    async fn wait_key(&self) -> Key {
+    async fn wait_key(&mut self) -> Key {
         loop {
             match self.keys.borrow_mut().next().unwrap().unwrap() {                                
                 TermKey::Char(c) if c.is_digit(10)

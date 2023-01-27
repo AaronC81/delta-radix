@@ -2,9 +2,11 @@
 #![no_main]
 #![feature(alloc_error_handler)]
 #![feature(default_alloc_error_handler)]
+#![feature(generic_const_exprs)]
 
 use core::panic::PanicInfo;
 
+use alloc::format;
 use alloc_cortex_m::CortexMHeap;
 use cortex_m_rt::entry;
 use delta_radix_hal::{Hal, Display};
@@ -79,7 +81,22 @@ fn main() -> ! {
 
     let mut hal = PicoHal {
         display: hal::LcdDisplay { lcd, delay: lives_forever(&mut delay) },
-        keypad: hal::ButtonMatrix,
+        keypad: hal::ButtonMatrix {
+            delay: lives_forever(&mut delay),
+
+            col0: pins.gpio15.into_pull_up_input(),
+            col1: pins.gpio16.into_pull_up_input(),
+            col2: pins.gpio17.into_pull_up_input(),
+            col3: pins.gpio18.into_pull_up_input(),
+            col4: pins.gpio19.into_pull_up_input(),
+
+            row0: pins.gpio20.into_push_pull_output(),
+            row1: pins.gpio21.into_push_pull_output(),
+            row2: pins.gpio22.into_push_pull_output(),
+            row3: pins.gpio26.into_push_pull_output(),
+            row4: pins.gpio27.into_push_pull_output(),
+            row5: pins.gpio28.into_push_pull_output(),
+        },
         time: hal::DelayTime { delay: lives_forever(&mut delay) },
     };
 

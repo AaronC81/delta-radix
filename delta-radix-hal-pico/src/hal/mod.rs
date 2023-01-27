@@ -6,13 +6,13 @@ pub use self::{display::LcdDisplay, keypad::ButtonMatrix, time::DelayTime};
 
 pub struct PicoHal<'d> {
     pub display: LcdDisplay<'d>,
-    pub keypad: ButtonMatrix,
+    pub keypad: ButtonMatrix<'d>,
     pub time: DelayTime<'d>,
 }
 
 impl<'d> delta_radix_hal::Hal for PicoHal<'d> {
     type D = LcdDisplay<'d>;
-    type K = ButtonMatrix;
+    type K = ButtonMatrix<'d>;
     type T = DelayTime<'d>;
 
     fn display(&self) -> &Self::D { &self.display }
