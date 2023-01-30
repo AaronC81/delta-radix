@@ -48,6 +48,9 @@ impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
 
     fn clear(&mut self) {
         self.lcd.clear(self.delay).unwrap();
+
+        // This command seems to take a while - prevent garbage
+        self.delay.delay_ms(10);
     }
 
     fn print_char(&mut self, c: char) {

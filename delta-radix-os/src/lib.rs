@@ -10,6 +10,8 @@ use delta_radix_hal::{Hal, Keypad, Display};
 
 pub async fn main(mut hal: impl Hal) {
     let (disp, keys, _) = hal.common_mut();
+    disp.init();
+
     disp.set_position(4, 1);
     disp.print_string("DELTA RADIX");
     disp.set_position(4, 3);
