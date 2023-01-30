@@ -98,7 +98,7 @@ fn main() -> ! {
         },
         time: hal::DelayTime { delay: lives_forever(&mut delay) },
     };
-
+    
     let rt = nostd_async::Runtime::new();
     nostd_async::Task::new(delta_radix_os::main(hal)).spawn(&rt).join();
     
