@@ -1,3 +1,12 @@
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum DisplaySpecialCharacter {
+    CursorLeft,
+    CursorRight,
+    Warning,
+    CursorLeftWithWarning,
+    CursorRightWithWarning,
+}
+
 pub trait Display {
     fn init(&mut self);
     fn clear(&mut self);
@@ -13,8 +22,15 @@ pub trait Display {
         }
     }
 
-    // These exist because the HD44780 character set shows \ as the Yen symbol, so we need to handle
-    // it specially!
-    fn print_cursor_left(&mut self) { self.print_char('\\') }
-    fn print_cursor_right(&mut self) { self.print_char('/') }
+    fn print_special(&mut self, character: DisplaySpecialCharacter) {
+        self.print_char(
+            match character {
+                DisplaySpecialCharacter::CursorLeft => '\\',
+                DisplaySpecialCharacter::CursorRight => '/',
+                DisplaySpecialCharacter::Warning => '!',
+                DisplaySpecialCharacter::CursorLeftWithWarning => '\\',
+                DisplaySpecialCharacter::CursorRightWithWarning => '/',
+            }
+        )
+    }
 }

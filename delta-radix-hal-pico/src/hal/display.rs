@@ -1,4 +1,5 @@
 use cortex_m::delay::Delay;
+use delta_radix_hal::DisplaySpecialCharacter;
 use hd44780_driver::{bus::FourBitBus, HD44780, Cursor, CursorBlink};
 use rp_pico::hal::gpio::{bank0::{Gpio11, Gpio10, Gpio9, Gpio8, Gpio7, Gpio6}, Output, Pin, PushPull};
 
@@ -60,12 +61,25 @@ impl<'d> LcdDisplay<'d> {
         0b00001000,
         0b00010000,
     ];
+
+    const CUSTOM_CHAR_INDEX_WARNING: u8 = 2;
+    const CUSTOM_CHAR_DATA_WARNING: [u8; 8] = [
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00010101,
+        0b00000000,
+    ];
 }
 
 impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
     fn init(&mut self) {
         self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_CURSOR_LEFT, Self::CUSTOM_CHAR_DATA_CURSOR_LEFT, self.delay).unwrap();
         self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT, Self::CUSTOM_CHAR_DATA_CURSOR_RIGHT, self.delay).unwrap();
+        self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_WARNING, Self::CUSTOM_CHAR_DATA_WARNING, self.delay).unwrap();
         
         self.clear();
 
@@ -99,10 +113,14 @@ impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
         (0, 0)
     }
 
-    fn print_cursor_left(&mut self) {
-        self.lcd.write_byte(Self::CUSTOM_CHAR_INDEX_CURSOR_LEFT, self.delay).unwrap();
-    }
-    fn print_cursor_right(&mut self) {
-        self.lcd.write_byte(Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT, self.delay).unwrap();
+    fn print_special(&mut self, character: DisplaySpecialCharacter) {
+        let byte = match character {
+            DisplaySpecialCharacter::CursorLeft => Self::CUSTOM_CHAR_INDEX_CURSOR_LEFT,
+            DisplaySpecialCharacter::CursorRight => Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT,
+            DisplaySpecialCharacter::Warning
+            | DisplaySpecialCharacter::CursorLeftWithWarning
+            | DisplaySpecialCharacter::CursorRightWithWarning => Self::CUSTOM_CHAR_INDEX_WARNING,
+        };
+        self.lcd.write_byte(byte, self.delay).unwrap();
     }
 }

@@ -1,5 +1,5 @@
 use alloc::{vec::Vec, vec};
-use delta_radix_hal::{Hal, Display, Keypad, Key};
+use delta_radix_hal::{Hal, Display, Keypad, Key, DisplaySpecialCharacter};
 
 mod glyph;
 use self::{glyph::{Glyph, Base}, eval::{EvaluationResult, Configuration, DataType, evaluate}, parse::{Parser, Node, ParserError}};
@@ -101,15 +101,16 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         }
 
         // Draw cursor
+        // TODO: warning + cursor
         disp.set_position(0, 1);
         for i in 0..20 {
             if i + 1 == self.cursor_pos {
-                disp.print_cursor_left()
+                disp.print_special(DisplaySpecialCharacter::CursorLeft)
             } else if i == self.cursor_pos {
-                disp.print_cursor_right()
+                disp.print_special(DisplaySpecialCharacter::CursorRight)
             } else {
                 if warning_indices.contains(&i) {
-                    disp.print_char('!')
+                    disp.print_special(DisplaySpecialCharacter::Warning)
                 } else {
                     disp.print_char(' ')
                 }
