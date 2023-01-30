@@ -93,6 +93,8 @@ fn main() -> ! {
             row3: pins.gpio26.into_push_pull_output(),
             row4: pins.gpio27.into_push_pull_output(),
             row5: pins.gpio28.into_push_pull_output(),
+
+            currently_pressed: None,
         },
         time: hal::DelayTime { delay: lives_forever(&mut delay) },
     };

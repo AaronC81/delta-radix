@@ -38,11 +38,15 @@ pub struct ButtonMatrix<'d> {
     pub row3: RowPin<Row3>,
     pub row4: RowPin<Row4>,
     pub row5: RowPin<Row5>,
+
+    pub currently_pressed: Option<(u8, u8)>,
 }
 
 impl<'d> ButtonMatrix<'d> {
     const COLS: usize = 5;
     const ROWS: usize = 6;
+
+    const DEBOUNCE_MS: u32 = 5;
 
     fn rows_and_cols(&mut self) ->
         ([&mut dyn OutputPin<Error = Infallible>; ButtonMatrix::<'d>::ROWS], [&mut dyn InputPin<Error = Infallible>; ButtonMatrix::<'d>::COLS])
@@ -80,6 +84,40 @@ impl<'d> ButtonMatrix<'d> {
 
         // Nothing pressed
         None
+    }
+
+    pub fn wait_press(&mut self) -> (u8, u8) {
+        // If we're currently pressing, wait for a release
+        if let Some(current_press) = self.currently_pressed {
+            loop {
+                if self.scan_matrix().is_none() {
+                    // Wait the debounce time, and check that there's still no press
+                    self.delay.delay_ms(Self::DEBOUNCE_MS);
+                    if self.scan_matrix().is_none() {
+                        break;
+                    }
+                }
+    
+                self.delay.delay_ms(5);
+            }
+        }
+
+        // Repeatedly scan the matrix until we get a press
+        loop {
+            if let Some(initial_press) = self.scan_matrix() {
+                // Wait the debounce time, and check that the press is the same
+                self.delay.delay_ms(Self::DEBOUNCE_MS);
+                if let Some(debounce_press) = self.scan_matrix() {
+                    if initial_press == debounce_press {
+                        // Yep, that's a press! Store it and return
+                        self.currently_pressed = Some(initial_press);
+                        return initial_press;
+                    }
+                }
+            }
+
+            self.delay.delay_ms(5);
+        }
     }
 
     pub fn map_key(&self, row: u8, col: u8) -> Option<Key> {
@@ -125,13 +163,10 @@ impl<'d> ButtonMatrix<'d> {
 impl<'d> delta_radix_hal::Keypad for ButtonMatrix<'d> {
     async fn wait_key(&mut self) -> Key {
         loop {
-            if let Some((r, c)) = self.scan_matrix() {
-                if let Some(key) = self.map_key(r, c) {
-                    return key
-                }
+            let (r, c) = self.wait_press();
+            if let Some(key) = self.map_key(r, c) {
+                return key
             }
-
-            self.delay.delay_ms(5);
         }
     }
 }
