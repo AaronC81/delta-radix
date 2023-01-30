@@ -124,6 +124,8 @@ impl<'d> ButtonMatrix<'d> {
         // TODO: these keycodes are for my breadboard prototype and will need changing
         match (row, col) {
             (0, 0) => Some(Key::Exe),
+            (0, 1) => Some(Key::Left),
+            (0, 2) => Some(Key::Right),
             
             (4, 0) => Some(Key::Digit(0)),
             (3, 0) => Some(Key::Digit(1)),
