@@ -104,12 +104,21 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         // TODO: warning + cursor
         disp.set_position(0, 1);
         for i in 0..20 {
+            let warn = warning_indices.contains(&i);
             if i + 1 == self.cursor_pos {
-                disp.print_special(DisplaySpecialCharacter::CursorLeft)
+                if warn {
+                    disp.print_special(DisplaySpecialCharacter::CursorLeftWithWarning)
+                } else {
+                    disp.print_special(DisplaySpecialCharacter::CursorLeft)
+                }
             } else if i == self.cursor_pos {
-                disp.print_special(DisplaySpecialCharacter::CursorRight)
+                if warn {
+                    disp.print_special(DisplaySpecialCharacter::CursorRightWithWarning)
+                } else {
+                    disp.print_special(DisplaySpecialCharacter::CursorRight)
+                }
             } else {
-                if warning_indices.contains(&i) {
+                if warn {
                     disp.print_special(DisplaySpecialCharacter::Warning)
                 } else {
                     disp.print_char(' ')

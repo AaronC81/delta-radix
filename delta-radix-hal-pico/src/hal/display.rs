@@ -73,6 +73,30 @@ impl<'d> LcdDisplay<'d> {
         0b00010101,
         0b00000000,
     ];
+
+    const CUSTOM_CHAR_INDEX_CURSOR_LEFT_WITH_WARNING: u8 = 3;
+    const CUSTOM_CHAR_DATA_CURSOR_LEFT_WITH_WARNING: [u8; 8] = [
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000100,
+        0b00010010,
+        0b00000001,
+    ];
+
+    const CUSTOM_CHAR_INDEX_CURSOR_RIGHT_WITH_WARNING: u8 = 4;
+    const CUSTOM_CHAR_DATA_CURSOR_RIGHT_WITH_WARNING: [u8; 8] = [
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000100,
+        0b00001001,
+        0b00010000,
+    ];
 }
 
 impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
@@ -80,6 +104,8 @@ impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
         self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_CURSOR_LEFT, Self::CUSTOM_CHAR_DATA_CURSOR_LEFT, self.delay).unwrap();
         self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT, Self::CUSTOM_CHAR_DATA_CURSOR_RIGHT, self.delay).unwrap();
         self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_WARNING, Self::CUSTOM_CHAR_DATA_WARNING, self.delay).unwrap();
+        self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_CURSOR_LEFT_WITH_WARNING, Self::CUSTOM_CHAR_DATA_CURSOR_LEFT_WITH_WARNING, self.delay).unwrap();
+        self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT_WITH_WARNING, Self::CUSTOM_CHAR_DATA_CURSOR_RIGHT_WITH_WARNING, self.delay).unwrap();
         
         self.clear();
 
@@ -117,9 +143,9 @@ impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
         let byte = match character {
             DisplaySpecialCharacter::CursorLeft => Self::CUSTOM_CHAR_INDEX_CURSOR_LEFT,
             DisplaySpecialCharacter::CursorRight => Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT,
-            DisplaySpecialCharacter::Warning
-            | DisplaySpecialCharacter::CursorLeftWithWarning
-            | DisplaySpecialCharacter::CursorRightWithWarning => Self::CUSTOM_CHAR_INDEX_WARNING,
+            DisplaySpecialCharacter::Warning => Self::CUSTOM_CHAR_INDEX_WARNING,
+            DisplaySpecialCharacter::CursorLeftWithWarning => Self::CUSTOM_CHAR_INDEX_CURSOR_LEFT_WITH_WARNING,
+            DisplaySpecialCharacter::CursorRightWithWarning => Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT_WITH_WARNING,
         };
         self.lcd.write_byte(byte, self.delay).unwrap();
     }
