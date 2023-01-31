@@ -101,7 +101,6 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         }
 
         // Draw cursor
-        // TODO: warning + cursor
         disp.set_position(0, 1);
         for i in 0..20 {
             let warn = warning_indices.contains(&i);
