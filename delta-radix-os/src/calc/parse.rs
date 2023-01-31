@@ -14,6 +14,18 @@ impl GlyphSpan {
     pub fn indices(&self) -> Range<usize> {
         self.start..(self.start + self.length)
     }
+
+    pub fn end(&self) -> usize {
+        self.start + self.length - 1
+    }
+
+    pub fn merge(&self, other: Self) -> Self {
+        let new_start = self.start.min(other.start);
+        let new_end = self.end().max(other.end());
+        let new_length = new_end - new_start + 1;
+
+        GlyphSpan { start: new_start, length: new_length }
+    }
 }
 
 pub struct Node {
@@ -61,7 +73,14 @@ impl<'g> Parser<'g> {
     }
 
     pub fn parse(&mut self) -> Result<Node, ParserError> {
-        self.parse_bottom()
+        let result = self.parse_top_level()?;
+
+        // Check we reached the end
+        if let Some(glyph) = self.here() {
+            Err(self.create_error(ParserErrorKind::UnexpectedGlyph(glyph)))
+        } else {
+            Ok(result)
+        }
     }
 
     fn here(&self) -> Option<Glyph> {
@@ -74,6 +93,28 @@ impl<'g> Parser<'g> {
 
     fn advance(&mut self) {
         self.ptr += 1;
+    }
+
+    fn parse_top_level(&mut self) -> Result<Node, ParserError> {
+        self.parse_add_sub()
+    }
+
+    fn parse_add_sub(&mut self) -> Result<Node, ParserError> {
+        let mut current = self.parse_bottom()?;
+
+        while let Some(op @ (Glyph::Add | Glyph::Subtract)) = self.here() {
+            self.advance();
+            let rhs = self.parse_bottom()?;
+            let span = current.span.merge(rhs.span);
+            let kind = match op {
+                Glyph::Add => NodeKind::Add(Box::new(current), Box::new(rhs)),
+                Glyph::Subtract => NodeKind::Subtract(Box::new(current), Box::new(rhs)),
+                _ => unreachable!(),
+            };
+            current = Node { span, kind };
+        }
+
+        Ok(current)
     }
 
     fn parse_bottom(&mut self) -> Result<Node, ParserError> {
