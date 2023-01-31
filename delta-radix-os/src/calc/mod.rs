@@ -1,4 +1,4 @@
-use alloc::{vec::Vec, vec};
+use alloc::{vec::Vec, vec, string::ToString};
 use delta_radix_hal::{Hal, Display, Keypad, Key, DisplaySpecialCharacter};
 
 mod glyph;
@@ -129,22 +129,24 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
     fn draw_result(&mut self) {
         let disp = self.hal.display_mut();
 
-        disp.set_position(0, 3);
+        let str;
         if let Some(result) = &self.eval_result {
             match result {
                 Ok(result) => {
-                    let str = if self.eval_config.data_type.signed {
+                    str = if self.eval_config.data_type.signed {
                         todo!("unsigned string not implemented")
                     } else {
                         result.result.to_unsigned_decimal_string()
                     };
-                    disp.print_string(&str);
                 },
-                Err(_) => disp.print_string("parse error"),
+                Err(_) => str = "parse error".to_string(),
             }
         } else {
-            disp.print_string(&str::repeat(" ", 20));
+            str = str::repeat(" ", 20);
         }
+
+        disp.set_position(20 - str.len() as u8, 3);
+        disp.print_string(&str);
     }
 
     fn process_input_and_redraw(&mut self, key: Key) {
