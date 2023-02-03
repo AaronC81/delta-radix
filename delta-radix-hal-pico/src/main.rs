@@ -66,6 +66,9 @@ fn main() -> ! {
     );
     let mut led = pins.led.into_push_pull_output();
 
+    let mut bl = pins.gpio5.into_push_pull_output();
+    bl.set_high().unwrap();
+
     // const int rs = 11, en = 10, d4 = 9, d5 = 8, d6 = 7, d7 = 6;
     let rs = pins.gpio11.into_push_pull_output();
     let en = pins.gpio10.into_push_pull_output();
