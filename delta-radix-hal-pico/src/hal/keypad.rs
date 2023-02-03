@@ -121,26 +121,26 @@ impl<'d> ButtonMatrix<'d> {
     }
 
     pub fn map_key(&self, row: u8, col: u8) -> Option<Key> {
-        // TODO: these keycodes are for my breadboard prototype and will need changing
-        match (row, col) {
-            (0, 0) => Some(Key::Exe),
-            (0, 1) => Some(Key::Left),
-            (0, 2) => Some(Key::Right),
+        match (col, row) {
+            (4, 5) => Some(Key::Exe),
+
+            (0, 1) => Some(Key::Add),
+
+            (3, 0) => Some(Key::Left),
+            (4, 0) => Some(Key::Right),
             
-            (4, 0) => Some(Key::Digit(0)),
-            (3, 0) => Some(Key::Digit(1)),
-            (3, 1) => Some(Key::Digit(2)),
-            (3, 2) => Some(Key::Digit(3)),
-            (2, 0) => Some(Key::Digit(4)),
-            (2, 1) => Some(Key::Digit(5)),
-            (2, 2) => Some(Key::Digit(6)),
-            (1, 0) => Some(Key::Digit(7)),
-            (1, 1) => Some(Key::Digit(8)),
-            (1, 2) => Some(Key::Digit(9)),
+            (0, 5) => Some(Key::Digit(0)),
+            (0, 4) => Some(Key::Digit(1)),
+            (1, 4) => Some(Key::Digit(2)),
+            (2, 4) => Some(Key::Digit(3)),
+            (0, 3) => Some(Key::Digit(4)),
+            (1, 3) => Some(Key::Digit(5)),
+            (2, 3) => Some(Key::Digit(6)),
+            (0, 2) => Some(Key::Digit(7)),
+            (1, 2) => Some(Key::Digit(8)),
+            (2, 2) => Some(Key::Digit(9)),
 
-            (4, 1) => Some(Key::Add),
-
-            (0, 3) => {
+            (0, 0) => {
                 // Handy bootloader button
                 unsafe {
                     // Resolve a function which allows us to look up items in ROM tables
