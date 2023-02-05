@@ -1,6 +1,7 @@
 use alloc::{format, string::String};
 
-use super::{num::FlexInt, parse::{Node, NodeKind}};
+use super::parse::{Node, NodeKind};
+use flex_int::FlexInt;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Configuration {

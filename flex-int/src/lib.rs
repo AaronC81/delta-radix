@@ -1,3 +1,6 @@
+#![no_std]
+extern crate alloc;
+
 use alloc::{vec, vec::Vec, string::{ToString, String}};
 
 /// An arbitrary-precision integer, stored as a sequence of bits.
@@ -13,7 +16,7 @@ impl FlexInt {
     /// Creates a new zeroed integer built of a particular number of bits.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// let i = FlexInt::new(4);
     /// assert_eq!(i.bits(), &[false, false, false, false]);
     /// ```
@@ -37,7 +40,7 @@ impl FlexInt {
     /// Creates an integer by taking the `size` least-significant bits of the given `value`.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// let i = FlexInt::from_int(0b1101, 4);
     /// assert_eq!(i.bits(), &[true, false, true, true]);
     /// ```
@@ -59,7 +62,7 @@ impl FlexInt {
     /// Also returns a boolean indicating whether the digits overflow the given size.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// let (i_str, over) = FlexInt::from_decimal_string("1234", 16);
     /// let i_num = FlexInt::from_int(1234, 16);
     /// assert_eq!(i_str, i_num);
@@ -99,7 +102,7 @@ impl FlexInt {
     /// Also returns a boolean indicating whether the digits overflow the given size.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// let (i_str, over) = FlexInt::from_hex_string("12A4", 16);
     /// let i_num = FlexInt::from_int(0x12A4, 16);
     /// assert_eq!(i_str, i_num);
@@ -189,7 +192,7 @@ impl FlexInt {
     /// Panics if the new size is less than the current size.
     ///
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// let pos = FlexInt::from_int(0b0101, 4);
     /// let pos_ext = pos.sign_extend(8);
     /// assert_eq!(pos_ext.bits(), &[true, false, true, false, false, false, false, false]);
@@ -218,7 +221,7 @@ impl FlexInt {
     /// Panics if the new size is less than the current size.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// let pos = FlexInt::from_int(0b0101, 4);
     /// let pos_ext = pos.zero_extend(8);
     /// assert_eq!(pos_ext.bits(), &[true, false, true, false, false, false, false, false]);
@@ -259,7 +262,7 @@ impl FlexInt {
     /// Panics if the new size is greater than the current size.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// let pos = FlexInt::from_int(0b11100101, 8);
     /// let (pos_ext, zeroes, ones) = pos.shrink(4);
     /// assert_eq!(pos_ext.bits(), &[true, false, true, false]);
@@ -302,7 +305,7 @@ impl FlexInt {
     /// of bits. In this case, `None` is returned instead.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// // Valid
     /// let a = FlexInt::from_int(0b0110, 4);
     /// assert_eq!(a.negate(), Some(FlexInt::from_int(0b1010, 4)));
@@ -343,7 +346,7 @@ impl FlexInt {
     /// Panics unless the two integers are the same size.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// // Non-overflowing, unsigned
     /// let a = FlexInt::from_int(0b0110, 4);
     /// let b = FlexInt::from_int(0b0011, 4);
@@ -402,7 +405,7 @@ impl FlexInt {
     /// Panics unless the two integers are the same size.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// // Non-overflowing, unsigned
     /// let a = FlexInt::from_int(11, 8);
     /// let b = FlexInt::from_int(8, 8);
@@ -479,7 +482,7 @@ impl FlexInt {
     /// Panics unless the two integers are the same size.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// let a = FlexInt::from_int(12, 8);
     /// let b = FlexInt::from_int(3, 8);
     /// assert_eq!(a.divide(&b, false), (FlexInt::from_int(4, 8), false));
@@ -560,7 +563,7 @@ impl FlexInt {
     /// Panics unless the two integers are the same size.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// let a = FlexInt::from_int(12, 8);
     /// let b = FlexInt::from_int(3, 8);
     /// assert_eq!(a.subtract_unsigned(&b), (FlexInt::from_int(9, 8), false));
@@ -609,7 +612,7 @@ impl FlexInt {
     /// Panics unless the two integers are the same size.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// let a = FlexInt::from_int(12, 8);
     /// let b = FlexInt::from_int(3, 8);
     /// assert_eq!(a.is_greater_than_unsigned(&b), true);
@@ -636,7 +639,7 @@ impl FlexInt {
     /// Panics unless the two integers are the same size.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// let a = FlexInt::from_int(12, 8);
     /// let b = FlexInt::from_int(12, 8);
     /// assert_eq!(a.equals(&b), true);
@@ -653,7 +656,7 @@ impl FlexInt {
     /// Converts this number into a string of decimal digits, treating it as unsigned.
     /// 
     /// ```rust
-    /// # use delta_radix_os::calc::num::FlexInt;
+    /// # use flex_int::FlexInt;
     /// let i = FlexInt::from_int(1234, 32);
     /// assert_eq!(i.to_unsigned_decimal_string(), "1234");
     /// 

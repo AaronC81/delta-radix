@@ -2,7 +2,8 @@ use core::ops::Range;
 
 use alloc::{vec, vec::Vec, string::String, boxed::Box};
 
-use super::{num::FlexInt, glyph::{Glyph, Base}, eval};
+use super::{glyph::{Glyph, Base}, eval};
+use flex_int::FlexInt;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct GlyphSpan {

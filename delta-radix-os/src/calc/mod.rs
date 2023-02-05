@@ -4,8 +4,6 @@ use delta_radix_hal::{Hal, Display, Keypad, Key, DisplaySpecialCharacter};
 mod glyph;
 use self::{glyph::{Glyph, Base}, eval::{EvaluationResult, Configuration, DataType, evaluate}, parse::{Parser, Node, ParserError}};
 
-pub mod num;
-
 mod eval;
 mod parse;
 
