@@ -17,31 +17,46 @@ impl TestCaseInt for u32 {
     fn is_signed() -> bool { false }
 }
 
+impl TestCaseInt for u8 {
+    fn bits() -> usize { 8 }
+    fn is_signed() -> bool { false }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Operation {
     Add,
+    Subtract,
 }
 
 impl Operation {
     fn random() -> Self {
-        *[Operation::Add].choose(&mut rand::thread_rng()).unwrap()
+        *[Operation::Add, Operation::Subtract].choose(&mut rand::thread_rng()).unwrap()
     }
 
     fn operate_on_ints<I: TestCaseInt>(&self, a: &I, b: &I) -> (I, bool) {
         match self {
             Operation::Add => a.overflowing_add(b),
+            Operation::Subtract => a.overflowing_sub(b),
         }
     }
 
     fn operate_on_flex_ints<I: TestCaseInt>(&self, a: &FlexInt, b: &FlexInt) -> (FlexInt, bool) {
         match self {
             Operation::Add => a.add(&b, I::is_signed()),
+            Operation::Subtract => {
+                if !I::is_signed() {
+                    a.subtract_unsigned(&b)
+                } else {
+                    todo!()
+                }
+            },
         }
     }
 
     fn symbol(&self) -> &'static str {
         match self {
             Operation::Add => "+",
+            Operation::Subtract => "-",
         }
     }
 }
@@ -74,6 +89,7 @@ fn fuzz_once<I: TestCaseInt>() where Standard: Distribution<I> {
 #[test]
 fn fuzz() {
     for _ in 0..10000 {
-        fuzz_once::<u32>()
+        fuzz_once::<u32>();
+        fuzz_once::<u8>();
     }
 }
