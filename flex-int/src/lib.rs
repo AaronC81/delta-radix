@@ -596,6 +596,39 @@ impl FlexInt {
         (result, borrow)
     }
 
+    /// Subtracts another signed integer from this one. Also returns a boolean indicating if 
+    /// overflow occurred.
+    /// 
+    /// Panics unless the two integers are the same size.
+    /// 
+    /// ```rust
+    /// # use flex_int::FlexInt;
+    /// let a = FlexInt::from_int(12, 8);
+    /// let b = FlexInt::from_int(3, 8).negate().unwrap();
+    /// assert_eq!(a.subtract_signed(&b), (FlexInt::from_int(15, 8), false));
+    /// ```
+    pub fn subtract_signed(&self, other: &FlexInt) -> (FlexInt, bool) {
+        self.validate_size(other);
+
+        // To perform signed subtraction, we'll just negate the other operand and add them!
+        // The negation can fail iff the other operand is already the lowest possible negative
+        // number (e.g. you can't negate -128 to represent 128 in a signed byte)
+        if let Some(negated) = other.negate() {
+            self.add(&negated, true)
+        } else {
+            // TODO: want to test this more carefully
+
+            // Add one and negate that, which is sure to succeed
+            let (other_plus_one, _) = self.add(other, true);
+            let (result, over_1) = self.add(&other_plus_one, true);
+            // ...then subtract another one
+            let (result, over_2) = result.add(&FlexInt::from_int(1, self.size()), true);
+
+            (result, over_1 || over_2)
+        }
+        // TODO how to deal?
+    }
+
     /// Whether this number is zero.
     pub fn is_zero(&self) -> bool {
         self.bits.iter().all(|b| !*b)
