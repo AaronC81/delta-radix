@@ -471,7 +471,18 @@ impl FlexInt {
         let started_negative = self.is_negative();
         let ended_negative = result.is_negative();
 
-        (result, if signed { !started_negative && ended_negative } else { carry })
+        (
+            result,
+            if signed {
+                if other.is_negative() {
+                    started_negative && !ended_negative
+                } else {
+                    !started_negative && ended_negative
+                }
+            } else {
+                carry
+            }
+        )
     }
 
     /// Multiplies one integer to another, and returns the result, plus a boolean indicating whether
