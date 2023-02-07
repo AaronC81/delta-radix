@@ -39,7 +39,7 @@ impl TestCaseInt for u8 {
 }
 
 impl TestCaseInt for i8 {
-    fn bits() -> usize { 7 }
+    fn bits() -> usize { 8 }
     fn is_signed() -> bool { true }
 }
 
@@ -111,5 +111,6 @@ fn fuzz() {
     for _ in 0..10000 {
         fuzz_once::<u32>();
         fuzz_once::<u8>();
+        fuzz_once::<i8>();
     }
 }
