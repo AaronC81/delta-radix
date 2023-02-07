@@ -392,9 +392,15 @@ impl FlexInt {
             return None
         }
 
+        // If we don't handle this case explicitly, the add after the inversion will overflow
+        //   0 0 0 0  --invert->  1 1 1 1  --add->  oh no
+        if self.is_zero() {
+            return Some(self.clone())
+        }
+
         let (num, over) = self.invert().add(&Self::new_one(self.size()), false);
         if over {
-            panic!("overflow not expected during negation")
+            panic!("overflow not expected during negation of {:?}", self)
         }
         Some(num)
     }
