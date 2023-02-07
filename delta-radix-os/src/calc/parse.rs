@@ -153,7 +153,7 @@ impl<'g> Parser<'g> {
             // Construct string of digits and parse number
             let str: String = digits.into_iter().collect();
             let (num, overflow) = match base {
-                Some(Base::Decimal) | None => FlexInt::from_decimal_string(&str, self.eval_config.data_type.bits),
+                Some(Base::Decimal) | None => FlexInt::from_unsigned_decimal_string(&str, self.eval_config.data_type.bits),
                 Some(Base::Hexadecimal) => FlexInt::from_hex_string(&str, self.eval_config.data_type.bits),
                 _ => todo!("base not yet implemented"),
             };

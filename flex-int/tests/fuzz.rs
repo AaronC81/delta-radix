@@ -10,6 +10,22 @@ where
 {
     fn bits() -> usize;
     fn is_signed() -> bool;
+
+    fn to_flex_int(&self) -> (FlexInt, bool) {
+        if Self::is_signed() {
+            FlexInt::from_signed_decimal_string(&self.to_string(), Self::bits())
+        } else {
+            FlexInt::from_unsigned_decimal_string(&self.to_string(), Self::bits())
+        }
+    }
+
+    fn flex_int_to_string(int: &FlexInt) -> String {
+        if Self::is_signed() {
+            int.to_signed_decimal_string()
+        } else {
+            int.to_unsigned_decimal_string()
+        }
+    }
 }
 
 impl TestCaseInt for u32 {
@@ -20,6 +36,11 @@ impl TestCaseInt for u32 {
 impl TestCaseInt for u8 {
     fn bits() -> usize { 8 }
     fn is_signed() -> bool { false }
+}
+
+impl TestCaseInt for i8 {
+    fn bits() -> usize { 7 }
+    fn is_signed() -> bool { true }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -47,7 +68,7 @@ impl Operation {
                 if !I::is_signed() {
                     a.subtract_unsigned(&b)
                 } else {
-                    todo!()
+                    a.subtract_signed(&b)
                 }
             },
         }
@@ -68,9 +89,9 @@ fn fuzz_once<I: TestCaseInt>() where Standard: Distribution<I> {
     let op = Operation::random();
     let (expected_result, expected_overflow) = op.operate_on_ints(&a, &b);
 
-    let (a_flex, a_err) = FlexInt::from_decimal_string(&a.to_string(), I::bits());
+    let (a_flex, a_err) = a.to_flex_int();
     assert!(!a_err, "failed to convert {} to {} bits (signedness {})", a, I::bits(), I::is_signed());
-    let (b_flex, b_err) = FlexInt::from_decimal_string(&b.to_string(), I::bits());
+    let (b_flex, b_err) = b.to_flex_int();
     assert!(!b_err, "failed to convert {} to {} bits (signedness {})", b, I::bits(), I::is_signed());
 
     let (flex_result, flex_overflow) = op.operate_on_flex_ints::<I>(&a_flex, &b_flex);
@@ -78,11 +99,10 @@ fn fuzz_once<I: TestCaseInt>() where Standard: Distribution<I> {
     let desc = format!(
         "expected: {} {} {} = {} (over {}), got: {} {} {} = {} (over {})",
         a, op.symbol(), b, expected_result, expected_overflow,
-        // TODO: correct signednesses
-        a_flex.to_unsigned_decimal_string(), op.symbol(), b_flex.to_unsigned_decimal_string(),
-        flex_result.to_unsigned_decimal_string(), flex_overflow, 
+        I::flex_int_to_string(&a_flex), op.symbol(), I::flex_int_to_string(&b_flex),
+        I::flex_int_to_string(&flex_result), flex_overflow, 
     );
-    assert!(flex_result.to_unsigned_decimal_string() == expected_result.to_string(), "{}", &desc);
+    assert!(I::flex_int_to_string(&flex_result) == expected_result.to_string(), "{}", &desc);
     assert!(expected_overflow == flex_overflow, "{}", &desc);
 }
 
