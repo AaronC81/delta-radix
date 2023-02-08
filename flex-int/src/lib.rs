@@ -706,17 +706,14 @@ impl FlexInt {
         if let Some(negated) = other.negate() {
             self.add(&negated, true)
         } else {
-            // TODO: want to test this more carefully
-
             // Add one and negate that, which is sure to succeed
-            let (other_plus_one, _) = self.add(other, true);
-            let (result, over_1) = self.add(&other_plus_one, true);
+            let (other_plus_one, _) = other.add(&FlexInt::new_one(self.size()), true);
+            let (result, over_1) = self.add(&other_plus_one.negate().unwrap(), true);
             // ...then subtract another one
             let (result, over_2) = result.add(&FlexInt::from_int(1, self.size()), true);
 
             (result, over_1 || over_2)
         }
-        // TODO how to deal?
     }
 
     /// Whether this number is zero.
