@@ -64,13 +64,7 @@ impl Operation {
     fn operate_on_flex_ints<I: TestCaseInt>(&self, a: &FlexInt, b: &FlexInt) -> (FlexInt, bool) {
         match self {
             Operation::Add => a.add(&b, I::is_signed()),
-            Operation::Subtract => {
-                if !I::is_signed() {
-                    a.subtract_unsigned(&b)
-                } else {
-                    a.subtract_signed(&b)
-                }
-            },
+            Operation::Subtract => a.subtract(&b, I::is_signed()),
         }
     }
 

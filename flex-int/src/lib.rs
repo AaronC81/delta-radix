@@ -647,6 +647,18 @@ impl FlexInt {
         }
     }
 
+    /// Subtracts another integer from this one.
+    /// 
+    /// Convenience method which calls either `subtract_signed` or `subtract_unsigned` based on the
+    /// value of `signed`.
+    pub fn subtract(&self, other: &FlexInt, signed: bool) -> (FlexInt, bool) {
+        if signed {
+            self.subtract_signed(other)
+        } else {
+            self.subtract_unsigned(other)
+        }
+    }
+
     /// Subtracts another unsigned integer from this one. Also returns a boolean indicating if
     /// whether the number became negative, which would not be valid for an unsigned number.
     /// 
