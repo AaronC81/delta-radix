@@ -554,6 +554,16 @@ impl FlexInt {
             if cut_ones > 0 && !result.is_negative() {
                 overflow = true;
             }
+
+            // Another thing to check - check that the resultant signedness matches the combined
+            // signedness of the operands
+            // (Two of the same sign = pos, two different signs = neg)
+            if !result.is_zero() {
+                let result_should_be_negative = self.is_negative() ^ other.is_negative();
+                if result.is_negative() != result_should_be_negative {
+                    overflow = true;
+                }
+            }
         } else {
             // In an unsigned number, overflow has occurred if any ones were cut
             if cut_ones > 0 {
