@@ -609,8 +609,7 @@ impl FlexInt {
         }
 
         if other.is_zero() {
-            // TODO handle better
-            panic!("divide by zero")
+            return (FlexInt::new(self.size()), true)
         }
 
         let mut quotient = FlexInt::new(a.size());
