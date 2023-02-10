@@ -1,12 +1,12 @@
 use std::fmt::Display;
 
 use flex_int::FlexInt;
-use num_traits::ops::overflowing::{OverflowingAdd, OverflowingSub, OverflowingMul};
+use num_traits::{ops::overflowing::{OverflowingAdd, OverflowingSub, OverflowingMul}, CheckedDiv, Zero};
 use rand::{prelude::Distribution, distributions::Standard, seq::SliceRandom};
 
 trait TestCaseInt
 where
-    Self: Sized + OverflowingAdd + OverflowingSub + OverflowingMul + Display,
+    Self: Sized + OverflowingAdd + OverflowingSub + OverflowingMul + CheckedDiv + Zero + Display,
 {
     fn bits() -> usize;
     fn is_signed() -> bool;
@@ -48,11 +48,14 @@ enum Operation {
     Add,
     Subtract,
     Multiply,
+    Divide,
 }
 
 impl Operation {
+    const ALL: [Operation; 4] = [Operation::Add, Operation::Subtract, Operation::Multiply, Operation::Divide];
+
     fn random() -> Self {
-        *[Operation::Add, Operation::Subtract, Operation::Multiply].choose(&mut rand::thread_rng()).unwrap()
+        *Self::ALL.choose(&mut rand::thread_rng()).unwrap()
     }
 
     fn operate_on_ints<I: TestCaseInt>(&self, a: &I, b: &I) -> (I, bool) {
@@ -60,6 +63,7 @@ impl Operation {
             Operation::Add => a.overflowing_add(b),
             Operation::Subtract => a.overflowing_sub(b),
             Operation::Multiply => a.overflowing_mul(b),
+            Operation::Divide => if let Some(r) = a.checked_div(b) { (r, false) } else { (I::zero(), true) },
         }
     }
 
@@ -68,6 +72,7 @@ impl Operation {
             Operation::Add => a.add(&b, I::is_signed()),
             Operation::Subtract => a.subtract(&b, I::is_signed()),
             Operation::Multiply => a.multiply(&b, I::is_signed()),
+            Operation::Divide => a.divide(&b, I::is_signed()),
         }
     }
 
@@ -76,6 +81,7 @@ impl Operation {
             Operation::Add => "+",
             Operation::Subtract => "-",
             Operation::Multiply => "*",
+            Operation::Divide => "/",
         }
     }
 }
