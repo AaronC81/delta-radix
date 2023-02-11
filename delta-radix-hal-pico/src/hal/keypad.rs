@@ -87,13 +87,13 @@ impl<'d> ButtonMatrix<'d> {
     }
 
     pub fn wait_press(&mut self) -> (u8, u8) {
-        // If we're currently pressing, wait for a release
+        // If we're currently pressing, wait for a release, or a different press
         if let Some(current_press) = self.currently_pressed {
             loop {
-                if self.scan_matrix().is_none() {
+                if self.scan_matrix() != Some(current_press) {
                     // Wait the debounce time, and check that there's still no press
                     self.delay.delay_ms(Self::DEBOUNCE_MS);
-                    if self.scan_matrix().is_none() {
+                    if self.scan_matrix() != Some(current_press) {
                         break;
                     }
                 }
