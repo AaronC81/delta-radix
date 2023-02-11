@@ -13,9 +13,9 @@ where
 
     fn to_flex_int(&self) -> (FlexInt, bool) {
         if Self::is_signed() {
-            FlexInt::from_signed_decimal_string(&self.to_string(), Self::bits())
+            FlexInt::from_signed_decimal_string(&self.to_string(), Self::bits()).unwrap()
         } else {
-            FlexInt::from_unsigned_decimal_string(&self.to_string(), Self::bits())
+            FlexInt::from_unsigned_decimal_string(&self.to_string(), Self::bits()).unwrap()
         }
     }
 

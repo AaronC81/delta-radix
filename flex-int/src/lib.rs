@@ -56,7 +56,7 @@ impl FlexInt {
 
     /// Creates a new unsigned integer of a given size by parsing a string of decimal digits.
     /// 
-    /// Only digits are permitted in the string; this will panic if other characters are
+    /// Only digits are permitted in the string; returns `None` if any other character is
     /// encountered.
     /// 
     /// Also returns a boolean indicating whether the digits overflow the given size.
@@ -73,7 +73,7 @@ impl FlexInt {
     /// assert_eq!(i_str, i_num);
     /// assert!(over);
     /// ```
-    pub fn from_unsigned_decimal_string(s: &str, size: usize) -> (Self, bool) {
+    pub fn from_unsigned_decimal_string(s: &str, size: usize) -> Option<(Self, bool)> {
         let mut result = Self::new(size);
         let ten = Self::from_int(10, size);
         let mut overflow = false;
@@ -83,15 +83,16 @@ impl FlexInt {
             overflow = overflow || over;
             result = r;
 
-            let (r, over) = result.add(&Self::from_int(
-                char::to_digit(c, 10).expect("invalid character") as u64,
-                size,
-            ), false);
+            let Some(d) = char::to_digit(c, 10) else {
+                return None
+            };
+
+            let (r, over) = result.add(&Self::from_int(d as u64, size), false);
             overflow = overflow || over;
             result = r;
         }
 
-        (result, overflow)
+        Some((result, overflow))
     }
 
     /// Creates a new unsigned integer of a given size by parsing a string of decimal digits.
@@ -125,7 +126,7 @@ impl FlexInt {
     /// let (i_str, over) = FlexInt::from_signed_decimal_string("-129", 8);
     /// assert!(over);
     /// ```
-    pub fn from_signed_decimal_string(s: &str, size: usize) -> (Self, bool) {
+    pub fn from_signed_decimal_string(s: &str, size: usize) -> Option<(Self, bool)> {
         let mut s = s.to_string();
         
         // Handle sign
@@ -143,7 +144,7 @@ impl FlexInt {
         }
 
         // Parse as an unsigned number
-        let (num, mut over) = Self::from_unsigned_decimal_string(&s, size);
+        let (num, mut over) = Self::from_unsigned_decimal_string(&s, size)?;
 
         // If the most-significant bit is set, there's already been overflow - unless this number
         // is going to be negated to the largest possible negative number
@@ -155,15 +156,15 @@ impl FlexInt {
         // Try to negate if the number is supposed to be negative, overflow if this fails
         if is_negative {
             if let Some(negated) = num.negate() {
-                (negated, over)
+                Some((negated, over))
             } else {
                 // Negation might fail if we had the largest possible negative before - override
                 // this
                 let over = !num.is_largest_possible_negative();
-                (num, over)
+                Some((num, over))
             }
         } else {
-            (num, over)
+            Some((num, over))
         }
     }
 
@@ -186,7 +187,7 @@ impl FlexInt {
     /// assert_eq!(i_str, i_num);
     /// assert!(over);
     /// ```
-    pub fn from_hex_string(s: &str, size: usize) -> (Self, bool) {
+    pub fn from_hex_string(s: &str, size: usize) -> Option<(Self, bool)> {
         let mut result = Self::new(size);
         let mut overflow = false;
 
@@ -218,12 +219,12 @@ impl FlexInt {
                 'D' | 'd' => [true,  false, true,  true ],
                 'E' | 'e' => [false, true,  true,  true ],
                 'F' | 'f' => [true,  true,  true,  true ],
-                _ => panic!("invalid character"),
+                _ => return None,
             };
             result.bits.splice(0..4, bits);
         }
 
-        (result, overflow)
+        Some((result, overflow))
     }
 
     /// Gets the bits of this number, least-significant first.
