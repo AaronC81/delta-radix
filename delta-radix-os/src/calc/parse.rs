@@ -156,7 +156,7 @@ impl<'g> Parser<'g> {
             let (num, overflow) =
                 match base {
                     Some(Base::Decimal) | None => FlexInt::from_unsigned_decimal_string(&str, self.eval_config.data_type.bits),
-                    Some(Base::Hexadecimal) => FlexInt::from_hex_string(&str, self.eval_config.data_type.bits),
+                    Some(Base::Hexadecimal) => FlexInt::from_unsigned_hex_string(&str, self.eval_config.data_type.bits),
                     _ => todo!("base not yet implemented"),
                 }
                     .ok_or(self.create_error(ParserErrorKind::InvalidNumber))?;

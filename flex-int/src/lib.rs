@@ -98,7 +98,7 @@ impl FlexInt {
     /// Creates a new unsigned integer of a given size by parsing a string of decimal digits.
     /// 
     /// The first character may optionally be a sign, then only digits are permitted in the string.
-    /// This will panic if other characters are encountered.
+    /// This will return None if other characters are encountered.
     /// 
     /// Also returns a boolean indicating whether the digits overflow the given size.
     /// 
@@ -132,24 +132,24 @@ impl FlexInt {
 
     /// Creates a new unsigned integer of a given size by parsing a string of hexadecimal digits.
     /// 
-    /// Only hexadecimal are permitted in the string; this will panic if other characters are
+    /// Only hexadecimal are permitted in the string; this will return None if other characters are
     /// encountered.
     /// 
     /// Also returns a boolean indicating whether the digits overflow the given size.
     /// 
     /// ```rust
     /// # use flex_int::FlexInt;
-    /// let (i_str, over) = FlexInt::from_hex_string("12A4", 16).unwrap();
+    /// let (i_str, over) = FlexInt::from_unsigned_hex_string("12A4", 16).unwrap();
     /// let i_num = FlexInt::from_int(0x12A4, 16);
     /// assert_eq!(i_str, i_num);
     /// assert!(!over);
     /// 
-    /// let (i_str, over) = FlexInt::from_hex_string("12A4", 8).unwrap();
+    /// let (i_str, over) = FlexInt::from_unsigned_hex_string("12A4", 8).unwrap();
     /// let i_num = FlexInt::from_int(0xA4, 8);
     /// assert_eq!(i_str, i_num);
     /// assert!(over);
     /// ```
-    pub fn from_hex_string(s: &str, size: usize) -> Option<(Self, bool)> {
+    pub fn from_unsigned_hex_string(s: &str, size: usize) -> Option<(Self, bool)> {
         let mut result = Self::new(size);
         let mut overflow = false;
 
@@ -187,6 +187,24 @@ impl FlexInt {
         }
 
         Some((result, overflow))
+    }
+
+    /// Creates a new signed integer of a given size by parsing a string of hexadecimal digits.
+    /// 
+    /// The first character may optionally be a sign, then only hexadecimal digits are permitted in
+    /// the string. This will return None if other characters are encountered.
+    /// 
+    /// Also returns a boolean indicating whether the digits overflow the given size.
+    /// 
+    /// ```rust
+    /// # use flex_int::FlexInt;
+    /// let (i_str, over) = FlexInt::from_signed_hex_string("-12A4", 16).unwrap();
+    /// let i_num = FlexInt::from_int(0x12A4, 16).negate().unwrap();
+    /// assert_eq!(i_str, i_num);
+    /// assert!(!over);
+    /// ```
+    pub fn from_signed_hex_string(s: &str, size: usize) -> Option<(Self, bool)> {
+        Self::from_signed_string(s, size, Self::from_unsigned_hex_string)
     }
 
     /// Gets the bits of this number, least-significant first.
@@ -915,6 +933,20 @@ impl FlexInt {
     /// ```
     pub fn to_signed_decimal_string(&self) -> String {
         self.to_signed_string(Self::to_unsigned_decimal_string)
+    }
+
+    /// Converts this number into a string of hexadecimal digits, treating it as signed.
+    /// 
+    /// ```rust
+    /// # use flex_int::FlexInt;
+    /// let (i, _) = FlexInt::from_signed_hex_string("12A4", 32).unwrap();
+    /// assert_eq!(i.to_signed_hex_string(), "12A4");
+    /// 
+    /// let (i, _) = FlexInt::from_signed_hex_string("-12A4", 32).unwrap();
+    /// assert_eq!(i.to_signed_hex_string(), "-12A4");
+    /// ```
+    pub fn to_signed_hex_string(&self) -> String {
+        self.to_signed_string(Self::to_unsigned_hex_string)
     }
 
     /// A convenience method which performs a signed number-to-string conversion by using an
