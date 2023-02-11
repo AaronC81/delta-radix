@@ -855,6 +855,72 @@ impl FlexInt {
         result
     }
 
+    /// Converts this number into a string of hexadecimal digits, treating it as unsigned.
+    /// 
+    /// ```rust
+    /// # use flex_int::FlexInt;
+    /// let i = FlexInt::from_int(0x12A4, 32);
+    /// assert_eq!(i.to_unsigned_hex_string(), "12A4");
+    /// 
+    /// let zero = FlexInt::new(16);
+    /// assert_eq!(zero.to_unsigned_hex_string(), "0");
+    /// ```
+    pub fn to_unsigned_hex_string(&self) -> String {
+        // Algorithm makes assumptions there will be some bits, so handle the case where there
+        // aren't early
+        if self.is_zero() {
+            return "0".to_string();
+        }
+
+        let mut result = "".to_string();
+
+        // Do some twiddling to chop off the "leading" zeroes
+        // Remember our bit representation goes from LSB to MSB, so in our representation they're
+        // actually trailing - handle this by reversing first
+        let bits = self.bits.iter()
+            .rev()
+            .copied()
+            .skip_while(|x| !*x)
+            .collect::<Vec<_>>()
+            .iter()
+            .rev()
+            .copied()
+            .collect::<Vec<_>>();
+
+        // Iterate through the bits of this number, in chunks of 4, from LSB to MSB
+        // (Pad with 0s if we don't have a full 4)
+        for chunk in bits.chunks(4) {
+            let mut chunk = chunk.to_vec();
+            while chunk.len() < 4 {
+                chunk.push(false);
+            }
+
+            let char = match &chunk[..] {
+                [false, false, false, false] => '0',
+                [true,  false, false, false] => '1',
+                [false, true,  false, false] => '2',
+                [true,  true,  false, false] => '3',
+                [false, false, true,  false] => '4',
+                [true,  false, true,  false] => '5',
+                [false, true,  true,  false] => '6',
+                [true,  true,  true,  false] => '7',
+                [false, false, false, true ] => '8',
+                [true,  false, false, true ] => '9',
+                [false, true,  false, true ] => 'A',
+                [true,  true,  false, true ] => 'B',
+                [false, false, true,  true ] => 'C',
+                [true,  false, true,  true ] => 'D',
+                [false, true,  true,  true ] => 'E',
+                [true,  true,  true,  true ] => 'F',
+
+                _ => unreachable!(),
+            };
+            result.insert(0, char);
+        }
+
+        result
+    }
+
     /// Converts this number into a string of decimal digits, treating it as signed.
     /// 
     /// ```rust
