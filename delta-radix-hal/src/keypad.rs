@@ -19,6 +19,8 @@ pub enum Key {
 
     HexBase,
     BinaryBase,
+
+    FormatSelect,
 }
 
 #[async_trait(?Send)]

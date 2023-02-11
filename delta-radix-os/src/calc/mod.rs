@@ -7,19 +7,32 @@ use self::{glyph::{Glyph, Base}, eval::{EvaluationResult, Configuration, DataTyp
 mod eval;
 mod parse;
 
+#[derive(PartialEq, Eq, Clone, Debug)]
+enum ApplicationState {
+    Normal,
+    FormatSelect,
+}
+
 pub struct CalculatorApplication<'h, H: Hal> {
     hal: &'h mut H,
+
+    state: ApplicationState,
+    output_format: Base,
+
     glyphs: Vec<Glyph>,
     cursor_pos: usize,
+    constant_overflows: bool,
+
     eval_config: Configuration,
     eval_result: Option<Result<EvaluationResult, ParserError>>,
-    constant_overflows: bool,
 }
 
 impl<'h, H: Hal> CalculatorApplication<'h, H> {
     pub fn new(hal: &'h mut H) -> Self {
         Self {
             hal,
+            state: ApplicationState::Normal,
+            output_format: Base::Decimal,
             glyphs: vec![],
             cursor_pos: 0,
             eval_config: Configuration {
@@ -128,19 +141,31 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         let disp = self.hal.display_mut();
 
         let str;
-        if let Some(result) = &self.eval_result {
-            match result {
-                Ok(result) => {
-                    str = if self.eval_config.data_type.signed {
-                        todo!("unsigned string not implemented")
-                    } else {
-                        result.result.to_unsigned_decimal_string()
-                    };
-                },
-                Err(_) => str = "parse error".to_string(),
-            }
+
+        if self.state == ApplicationState::FormatSelect {
+            str = "BASE?".to_string();
         } else {
-            str = str::repeat(" ", 20);
+            if let Some(result) = &self.eval_result {
+                match result {
+                    Ok(result) => {
+                        match self.output_format {
+                            Base::Decimal => {
+                                str = if self.eval_config.data_type.signed {
+                                    result.result.to_signed_decimal_string()
+                                } else {
+                                    result.result.to_unsigned_decimal_string()
+                                };
+                            }
+                            Base::Hexadecimal => todo!(),
+                            Base::Binary => todo!(),
+                        }
+                        
+                    },
+                    Err(_) => str = "parse error".to_string(),
+                }
+            } else {
+                str = str::repeat(" ", 20);
+            }
         }
 
         disp.set_position(20 - str.len() as u8, 3);
@@ -148,45 +173,61 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
     }
 
     fn process_input_and_redraw(&mut self, key: Key) {
-        match key {
-            Key::Digit(d) => self.insert_and_redraw(Glyph::Digit(d)),
-            Key::HexBase => self.insert_and_redraw(Glyph::Base(Base::Hexadecimal)),
-            Key::BinaryBase => self.insert_and_redraw(Glyph::Base(Base::Binary)),
-
-            Key::Add => self.insert_and_redraw(Glyph::Add),
-            Key::Subtract => self.insert_and_redraw(Glyph::Subtract),
-            Key::Multiply => self.insert_and_redraw(Glyph::Multiply),
-            Key::Divide => self.insert_and_redraw(Glyph::Divide),
-
-            Key::Left => {
-                if self.cursor_pos > 0 {
-                    self.cursor_pos -= 1;
-                    self.draw_expression();
+        match self.state {
+            ApplicationState::Normal => match key {
+                Key::Digit(d) => self.insert_and_redraw(Glyph::Digit(d)),
+                Key::HexBase => self.insert_and_redraw(Glyph::Base(Base::Hexadecimal)),
+                Key::BinaryBase => self.insert_and_redraw(Glyph::Base(Base::Binary)),
+    
+                Key::Add => self.insert_and_redraw(Glyph::Add),
+                Key::Subtract => self.insert_and_redraw(Glyph::Subtract),
+                Key::Multiply => self.insert_and_redraw(Glyph::Multiply),
+                Key::Divide => self.insert_and_redraw(Glyph::Divide),
+    
+                Key::Left => {
+                    if self.cursor_pos > 0 {
+                        self.cursor_pos -= 1;
+                        self.draw_expression();
+                    }
+                },
+                Key::Right => {
+                    if self.cursor_pos < self.glyphs.len() {
+                        self.cursor_pos += 1;
+                        self.draw_expression();
+                    }
                 }
+                Key::Delete => {
+                    if self.cursor_pos > 0 {
+                        self.cursor_pos -= 1;
+                        self.glyphs.remove(self.cursor_pos);
+                        self.draw_expression();
+                        self.clear_evaluation();
+                    }
+                },
+                Key::Exe => {
+                    self.evaluate();
+                    self.draw_result();
+                    self.draw_header();
+                }
+
+                Key::FormatSelect => {
+                    self.state = ApplicationState::FormatSelect;
+                    self.draw_result();
+                }
+    
+                Key::Shift => (),
+                Key::Menu => (),
             },
-            Key::Right => {
-                if self.cursor_pos < self.glyphs.len() {
-                    self.cursor_pos += 1;
-                    self.draw_expression();
-                }
-            }
-            Key::Delete => {
-                if self.cursor_pos > 0 {
-                    self.cursor_pos -= 1;
-                    self.glyphs.remove(self.cursor_pos);
-                    self.draw_expression();
-                    self.clear_evaluation();
-                }
-            },
-            Key::Exe => {
-                self.evaluate();
-                self.draw_result();
-                self.draw_header();
-            }
+            
+            ApplicationState::FormatSelect => match key {
+                Key::HexBase => self.set_output_format_and_redraw(Base::Hexadecimal),
+                Key::BinaryBase => self.set_output_format_and_redraw(Base::Binary),
+                Key::FormatSelect => self.set_output_format_and_redraw(Base::Decimal),
 
-            Key::Shift => (),
-            Key::Menu => (),
+                _ => (),
+            }
         }
+        
     }
 
     fn insert_and_redraw(&mut self, glyph: Glyph) {
@@ -194,6 +235,12 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         self.cursor_pos += 1;
         self.draw_expression();
         self.clear_evaluation();
+    }
+
+    fn set_output_format_and_redraw(&mut self, base: Base) {
+        self.output_format = base;
+        self.state = ApplicationState::Normal;
+        self.draw_full();
     }
 
     fn parse(&self) -> (Parser, Result<Node, ParserError>) {

@@ -126,6 +126,8 @@ impl<'d> ButtonMatrix<'d> {
 
             (0, 1) => Some(Key::Add),
 
+            (4, 1) => Some(Key::Delete),
+
             (3, 0) => Some(Key::Left),
             (4, 0) => Some(Key::Right),
             
@@ -147,6 +149,7 @@ impl<'d> ButtonMatrix<'d> {
             (3, 2) => Some(Key::Digit(0xE)),
             (4, 2) => Some(Key::Digit(0xF)),
 
+            (1, 5) => Some(Key::FormatSelect),
             (2, 5) => Some(Key::HexBase),
             (3, 5) => Some(Key::BinaryBase),
 
