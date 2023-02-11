@@ -140,6 +140,13 @@ impl<'d> ButtonMatrix<'d> {
             (1, 2) => Some(Key::Digit(8)),
             (2, 2) => Some(Key::Digit(9)),
 
+            (3, 4) => Some(Key::Digit(0xA)),
+            (4, 4) => Some(Key::Digit(0xB)),
+            (3, 3) => Some(Key::Digit(0xC)),
+            (4, 3) => Some(Key::Digit(0xD)),
+            (3, 2) => Some(Key::Digit(0xE)),
+            (4, 2) => Some(Key::Digit(0xF)),
+
             (2, 5) => Some(Key::HexBase),
             (3, 5) => Some(Key::BinaryBase),
 

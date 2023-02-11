@@ -20,7 +20,7 @@ pub enum Glyph {
 impl Glyph {
     pub fn to_char(self) -> char {
         match self {
-            Glyph::Digit(d) => char::from_digit(d as u32, 10).unwrap(),
+            Glyph::Digit(d) => char::from_digit(d as u32, 16).unwrap().to_uppercase().next().unwrap(),
 
             Glyph::Add => '+',
             Glyph::Subtract => '-',

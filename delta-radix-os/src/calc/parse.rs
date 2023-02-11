@@ -134,7 +134,7 @@ impl<'g> Parser<'g> {
             loop {
                 match self.here() {
                     Some(Glyph::Digit(d)) => {
-                        digits.push(char::from_digit(d as u32, 10).unwrap());
+                        digits.push(char::from_digit(d as u32, 16).unwrap());
                         self.advance();
                     },
                     _ => break,
