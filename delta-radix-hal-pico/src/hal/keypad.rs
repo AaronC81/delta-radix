@@ -140,6 +140,9 @@ impl<'d> ButtonMatrix<'d> {
             (1, 2) => Some(Key::Digit(8)),
             (2, 2) => Some(Key::Digit(9)),
 
+            (2, 5) => Some(Key::HexBase),
+            (3, 5) => Some(Key::BinaryBase),
+
             (0, 0) => {
                 // Handy bootloader button
                 unsafe {
