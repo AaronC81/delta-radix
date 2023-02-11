@@ -63,12 +63,12 @@ impl FlexInt {
     /// 
     /// ```rust
     /// # use flex_int::FlexInt;
-    /// let (i_str, over) = FlexInt::from_unsigned_decimal_string("1234", 16);
+    /// let (i_str, over) = FlexInt::from_unsigned_decimal_string("1234", 16).unwrap();
     /// let i_num = FlexInt::from_int(1234, 16);
     /// assert_eq!(i_str, i_num);
     /// assert!(!over);
     /// 
-    /// let (i_str, over) = FlexInt::from_unsigned_decimal_string("260", 8);
+    /// let (i_str, over) = FlexInt::from_unsigned_decimal_string("260", 8).unwrap();
     /// let i_num = FlexInt::from_int(260 % 256, 8);
     /// assert_eq!(i_str, i_num);
     /// assert!(over);
@@ -105,67 +105,29 @@ impl FlexInt {
     /// ```rust
     /// # use flex_int::FlexInt;
     /// // Positive conversion
-    /// let (i_str, over) = FlexInt::from_signed_decimal_string("1234", 16);
+    /// let (i_str, over) = FlexInt::from_signed_decimal_string("1234", 16).unwrap();
     /// let i_num = FlexInt::from_int(1234, 16);
     /// assert_eq!(i_str, i_num);
     /// assert!(!over);
     ///
     /// // Negative conversion
-    /// let (i_str, over) = FlexInt::from_signed_decimal_string("-1234", 16);
+    /// let (i_str, over) = FlexInt::from_signed_decimal_string("-1234", 16).unwrap();
     /// let i_num = FlexInt::from_int(1234, 16).negate().unwrap();
     /// assert_eq!(i_str, i_num);
     /// assert!(!over);
     /// 
     /// // Largest possible negative conversion
-    /// let (i_str, over) = FlexInt::from_signed_decimal_string("-128", 8);
+    /// let (i_str, over) = FlexInt::from_signed_decimal_string("-128", 8).unwrap();
     /// let i_num = FlexInt::from_bits(&[false, false, false, false, false, false, false, true]);
     /// assert_eq!(i_str, i_num);
     /// assert!(!over);
     /// 
     /// // Overflowing conversion
-    /// let (i_str, over) = FlexInt::from_signed_decimal_string("-129", 8);
+    /// let (i_str, over) = FlexInt::from_signed_decimal_string("-129", 8).unwrap();
     /// assert!(over);
     /// ```
     pub fn from_signed_decimal_string(s: &str, size: usize) -> Option<(Self, bool)> {
-        let mut s = s.to_string();
-        
-        // Handle sign
-        let mut is_negative = false;
-        let first_char = s.chars().next();
-        match first_char {
-            Some('+') => {
-                s.remove(0);
-            }
-            Some('-') => {
-                is_negative = true;
-                s.remove(0);
-            }
-            _ => (),
-        }
-
-        // Parse as an unsigned number
-        let (num, mut over) = Self::from_unsigned_decimal_string(&s, size)?;
-
-        // If the most-significant bit is set, there's already been overflow - unless this number
-        // is going to be negated to the largest possible negative number
-        // (Remember we can represent one more negative number than positive number)
-        if num.is_negative() && !(num.is_largest_possible_negative() && is_negative) {
-            over = true;
-        }
-
-        // Try to negate if the number is supposed to be negative, overflow if this fails
-        if is_negative {
-            if let Some(negated) = num.negate() {
-                Some((negated, over))
-            } else {
-                // Negation might fail if we had the largest possible negative before - override
-                // this
-                let over = !num.is_largest_possible_negative();
-                Some((num, over))
-            }
-        } else {
-            Some((num, over))
-        }
+        Self::from_signed_string(s, size, Self::from_unsigned_decimal_string)
     }
 
     /// Creates a new unsigned integer of a given size by parsing a string of hexadecimal digits.
@@ -177,12 +139,12 @@ impl FlexInt {
     /// 
     /// ```rust
     /// # use flex_int::FlexInt;
-    /// let (i_str, over) = FlexInt::from_hex_string("12A4", 16);
+    /// let (i_str, over) = FlexInt::from_hex_string("12A4", 16).unwrap();
     /// let i_num = FlexInt::from_int(0x12A4, 16);
     /// assert_eq!(i_str, i_num);
     /// assert!(!over);
     /// 
-    /// let (i_str, over) = FlexInt::from_hex_string("12A4", 8);
+    /// let (i_str, over) = FlexInt::from_hex_string("12A4", 8).unwrap();
     /// let i_num = FlexInt::from_int(0xA4, 8);
     /// assert_eq!(i_str, i_num);
     /// assert!(over);
@@ -925,19 +887,69 @@ impl FlexInt {
     /// 
     /// ```rust
     /// # use flex_int::FlexInt;
-    /// let (i, _) = FlexInt::from_signed_decimal_string("1234", 16);
+    /// let (i, _) = FlexInt::from_signed_decimal_string("1234", 16).unwrap();
     /// assert_eq!(i.to_signed_decimal_string(), "1234");
     /// 
-    /// let (i, _) = FlexInt::from_signed_decimal_string("-1234", 16);
+    /// let (i, _) = FlexInt::from_signed_decimal_string("-1234", 16).unwrap();
     /// assert_eq!(i.to_signed_decimal_string(), "-1234");
     /// ```
     pub fn to_signed_decimal_string(&self) -> String {
+        self.to_signed_string(Self::to_unsigned_decimal_string)
+    }
+
+    /// A convenience method which performs a signed number-to-string conversion by using an
+    /// existing implementation of an unsigned conversion.
+    fn to_signed_string(&self, unsigned_string_fn: impl FnOnce(&Self) -> String) -> String {
         // Make absolute and convert to unsigned string, then just add the sign if needed
-        let mut str = self.sign_extend(self.size() + 1).abs().unwrap().to_unsigned_decimal_string();
+        let mut str = unsigned_string_fn(&self.sign_extend(self.size() + 1).abs().unwrap());
         if self.is_negative() {
             str.insert(0, '-');
         }
         str
+    }
+
+    /// A convenience methods which performs a signed string-to-number conversion by using an
+    /// existing implementation of an unsigned conversion.
+    fn from_signed_string(s: &str, size: usize, unsigned_string_fn: impl FnOnce(&str, usize) -> Option<(Self, bool)>) -> Option<(Self, bool)> {
+        let mut s = s.to_string();
+        
+        // Handle sign
+        let mut is_negative = false;
+        let first_char = s.chars().next();
+        match first_char {
+            Some('+') => {
+                s.remove(0);
+            }
+            Some('-') => {
+                is_negative = true;
+                s.remove(0);
+            }
+            _ => (),
+        }
+
+        // Parse as an unsigned number
+        let (num, mut over) = unsigned_string_fn(&s, size)?;
+
+        // If the most-significant bit is set, there's already been overflow - unless this number
+        // is going to be negated to the largest possible negative number
+        // (Remember we can represent one more negative number than positive number)
+        if num.is_negative() && !(num.is_largest_possible_negative() && is_negative) {
+            over = true;
+        }
+
+        // Try to negate if the number is supposed to be negative, overflow if this fails
+        if is_negative {
+            if let Some(negated) = num.negate() {
+                Some((negated, over))
+            } else {
+                // Negation might fail if we had the largest possible negative before - override
+                // this
+                let over = !num.is_largest_possible_negative();
+                Some((num, over))
+            }
+        } else {
+            Some((num, over))
+        }
     }
 
     /// Validates that the size of this integer matches the size of another, and panics if it does
