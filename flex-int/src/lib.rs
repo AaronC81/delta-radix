@@ -553,6 +553,26 @@ impl FlexInt {
     pub fn divide(&self, other: &FlexInt, signed: bool) -> (FlexInt, bool) {
         self.validate_size(other);
 
+        // Special cases - there are problems dividing the largest possible negative by 1 (or -1), 
+        // so handle this explicitly
+        let other_is_one = 
+            if signed {
+                other.abs() == Some(Self::new_one(self.size()))
+            } else {
+                other == &Self::new_one(self.size())
+            };
+        if other_is_one {
+            if other.is_negative() {
+                if let Some(neg) = self.negate() {
+                    return (neg, false)
+                } else {
+                    return (Self::new(self.size()), true)
+                }
+            } else {
+                return (self.clone(), false)
+            }
+        }
+
         let a;
         let b;
         let negate_result;
