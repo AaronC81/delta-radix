@@ -1,4 +1,4 @@
-use alloc::{vec::Vec, vec, string::ToString};
+use alloc::{vec::Vec, vec, string::ToString, format};
 use delta_radix_hal::{Hal, Display, Keypad, Key, DisplaySpecialCharacter};
 
 mod glyph;
@@ -156,7 +156,13 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                                     result.result.to_unsigned_decimal_string()
                                 };
                             }
-                            Base::Hexadecimal => todo!(),
+                            Base::Hexadecimal => {
+                                str = format!("x{}", if self.eval_config.data_type.signed {
+                                    result.result.to_signed_hex_string()
+                                } else {
+                                    result.result.to_unsigned_hex_string()
+                                });
+                            }
                             Base::Binary => todo!(),
                         }
                         
