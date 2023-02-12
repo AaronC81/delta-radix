@@ -107,6 +107,7 @@ impl Keypad for SimKeypad {
                 TermKey::Right => return Key::Right,
                 TermKey::Backspace => return Key::Delete,
                 TermKey::Char('\n') => return Key::Exe,
+                TermKey::Esc => return Key::Menu,
 
                 TermKey::Char(' ') => return Key::Menu,
                 TermKey::Char('s') => return Key::Shift,
@@ -134,6 +135,7 @@ impl SimHal {
     }
 }
 
+#[async_trait(?Send)]
 impl Hal for SimHal {
     type D = SimDisplay;
     type K = SimKeypad;
@@ -151,4 +153,12 @@ impl Hal for SimHal {
     fn common_mut(&mut self) -> (&mut Self::D, &mut Self::K, &mut Self::T) {
         (&mut self.display, &mut self.keypad, &mut self.time)
     }
+
+    async fn enter_bootloader(&mut self) {
+        let (display, _, time) = self.common_mut();
+        display.clear();
+        display.set_position(3, 1);
+        display.print_string("No bootloader");
+        time.sleep(Duration::from_secs(2)).await;
+    }   
 }

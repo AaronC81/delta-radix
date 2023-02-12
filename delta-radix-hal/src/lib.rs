@@ -1,5 +1,7 @@
 #![no_std]
 extern crate alloc;
+use async_trait::async_trait;
+use alloc::boxed::Box;
 
 mod display;
 pub use display::*;
@@ -10,6 +12,7 @@ pub use keypad::*;
 mod time;
 pub use time::*;
 
+#[async_trait(?Send)]
 pub trait Hal {
     type D: Display;
     type K: Keypad;
@@ -25,4 +28,6 @@ pub trait Hal {
     fn time_mut(&mut self) -> &mut Self::T;
 
     fn common_mut(&mut self) -> (&mut Self::D, &mut Self::K, &mut Self::T);
+
+    async fn enter_bootloader(&mut self);
 }

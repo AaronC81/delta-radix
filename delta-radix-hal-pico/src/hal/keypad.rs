@@ -153,24 +153,8 @@ impl<'d> ButtonMatrix<'d> {
             (2, 5) => Some(Key::HexBase),
             (3, 5) => Some(Key::BinaryBase),
 
-            (0, 0) => {
-                // Handy bootloader button
-                unsafe {
-                    // Resolve a function which allows us to look up items in ROM tables
-                    let rom_table_lookup_fn_addr = *(0x18 as *const u16) as *const ();
-                    let rom_table_lookup_fn: extern "C" fn(*const u16, u32) -> *const () = core::mem::transmute(rom_table_lookup_fn_addr);
-                    
-                    // Use that function to look up the address of the USB bootloader function
-                    let usb_boot_fn_code = (('B' as u32) << 8) | ('U' as u32);
-                    let func_table = *(0x14 as *const u16) as *const u16;
-                    let usb_boot_fn_addr = rom_table_lookup_fn(func_table, usb_boot_fn_code);
-
-                    // Call that function
-                    let usb_boot_fn: extern "C" fn(u32, u32) = core::mem::transmute(usb_boot_fn_addr);
-                    usb_boot_fn(0, 0);
-                }
-                panic!("failed to access bootloader")
-            }
+            (0, 0) => Some(Key::Menu),
+            
             _ => None,
         }
     }

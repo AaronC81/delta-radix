@@ -2,6 +2,8 @@ use alloc::{vec::Vec, vec, string::ToString, format};
 use delta_radix_hal::{Hal, Display, Keypad, Key, DisplaySpecialCharacter};
 
 mod glyph;
+use crate::menu;
+
 use self::{glyph::{Glyph, Base}, eval::{EvaluationResult, Configuration, DataType, evaluate}, parse::{Parser, Node, ParserError}};
 
 mod eval;
@@ -51,7 +53,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
         loop {
             let key = self.hal.keypad_mut().wait_key().await;
-            self.process_input_and_redraw(key);
+            self.process_input_and_redraw(key).await;
         }
     }
 
@@ -178,7 +180,12 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         disp.print_string(&str);
     }
 
-    fn process_input_and_redraw(&mut self, key: Key) {
+    async fn process_input_and_redraw(&mut self, key: Key) {
+        if menu::check_menu(self.hal, key).await {
+            self.draw_full();
+            return
+        }
+
         match self.state {
             ApplicationState::Normal => match key {
                 Key::Digit(d) => self.insert_and_redraw(Glyph::Digit(d)),
