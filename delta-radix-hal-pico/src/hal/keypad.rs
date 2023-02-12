@@ -154,6 +154,7 @@ impl<'d> ButtonMatrix<'d> {
             (3, 5) => Some(Key::BinaryBase),
 
             (0, 0) => Some(Key::Menu),
+            (1, 0) => Some(Key::Shift),
             
             _ => None,
         }

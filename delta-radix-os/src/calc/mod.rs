@@ -20,6 +20,7 @@ pub struct CalculatorApplication<'h, H: Hal> {
 
     state: ApplicationState,
     output_format: Base,
+    input_shifted: bool,
 
     glyphs: Vec<Glyph>,
     cursor_pos: usize,
@@ -35,6 +36,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             hal,
             state: ApplicationState::Normal,
             output_format: Base::Decimal,
+            input_shifted: false,
             glyphs: vec![],
             cursor_pos: 0,
             eval_config: Configuration {
@@ -82,7 +84,11 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         let mut ptr = name.len() + 1;
         let ptr_target = if has_overflow { 20 - overflow_marker.len() } else { 20 };
         while ptr < ptr_target {
-            disp.print_char('=');
+            if self.input_shifted {
+                disp.print_char('^');
+            } else {
+                disp.print_char('=');
+            }
             ptr += 1;
         }
 
@@ -187,50 +193,69 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         }
 
         match self.state {
-            ApplicationState::Normal => match key {
-                Key::Digit(d) => self.insert_and_redraw(Glyph::Digit(d)),
-                Key::HexBase => self.insert_and_redraw(Glyph::Base(Base::Hexadecimal)),
-                Key::BinaryBase => self.insert_and_redraw(Glyph::Base(Base::Binary)),
-    
-                Key::Add => self.insert_and_redraw(Glyph::Add),
-                Key::Subtract => self.insert_and_redraw(Glyph::Subtract),
-                Key::Multiply => self.insert_and_redraw(Glyph::Multiply),
-                Key::Divide => self.insert_and_redraw(Glyph::Divide),
-    
-                Key::Left => {
-                    if self.cursor_pos > 0 {
-                        self.cursor_pos -= 1;
-                        self.draw_expression();
-                    }
-                },
-                Key::Right => {
-                    if self.cursor_pos < self.glyphs.len() {
-                        self.cursor_pos += 1;
-                        self.draw_expression();
-                    }
-                }
-                Key::Delete => {
-                    if self.cursor_pos > 0 {
-                        self.cursor_pos -= 1;
-                        self.glyphs.remove(self.cursor_pos);
-                        self.draw_expression();
-                        self.clear_evaluation();
-                    }
-                },
-                Key::Exe => {
-                    self.evaluate();
-                    self.draw_result();
-                    self.draw_header();
-                }
+            ApplicationState::Normal =>
+                if self.input_shifted {
+                    match key {
+                        Key::Shift => {
+                            self.input_shifted = false;
+                            self.draw_header();
+                        }
+                        Key::FormatSelect => {
+                            todo!();
+                        }
 
-                Key::FormatSelect => {
-                    self.state = ApplicationState::FormatSelect;
-                    self.draw_result();
-                }
-    
-                Key::Shift => (),
-                Key::Menu => (),
-            },
+                        _ => (),
+                    }
+                } else {
+                    match key {
+                        Key::Digit(d) => self.insert_and_redraw(Glyph::Digit(d)),
+                        Key::HexBase => self.insert_and_redraw(Glyph::Base(Base::Hexadecimal)),
+                        Key::BinaryBase => self.insert_and_redraw(Glyph::Base(Base::Binary)),
+            
+                        Key::Add => self.insert_and_redraw(Glyph::Add),
+                        Key::Subtract => self.insert_and_redraw(Glyph::Subtract),
+                        Key::Multiply => self.insert_and_redraw(Glyph::Multiply),
+                        Key::Divide => self.insert_and_redraw(Glyph::Divide),
+            
+                        Key::Left => {
+                            if self.cursor_pos > 0 {
+                                self.cursor_pos -= 1;
+                                self.draw_expression();
+                            }
+                        },
+                        Key::Right => {
+                            if self.cursor_pos < self.glyphs.len() {
+                                self.cursor_pos += 1;
+                                self.draw_expression();
+                            }
+                        }
+                        Key::Delete => {
+                            if self.cursor_pos > 0 {
+                                self.cursor_pos -= 1;
+                                self.glyphs.remove(self.cursor_pos);
+                                self.draw_expression();
+                                self.clear_evaluation();
+                            }
+                        },
+                        Key::Exe => {
+                            self.evaluate();
+                            self.draw_result();
+                            self.draw_header();
+                        }
+
+                        Key::FormatSelect => {
+                            self.state = ApplicationState::FormatSelect;
+                            self.draw_result();
+                        }
+            
+                        Key::Shift => {
+                            self.input_shifted = true;
+                            self.draw_header();
+                        }
+
+                        Key::Menu => (),
+                    }
+                },
             
             ApplicationState::FormatSelect => match key {
                 Key::HexBase => self.set_output_format_and_redraw(Base::Hexadecimal),
