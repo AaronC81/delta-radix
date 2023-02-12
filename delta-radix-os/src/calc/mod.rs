@@ -1,4 +1,4 @@
-use alloc::{vec::Vec, vec, string::ToString, format};
+use alloc::{vec::Vec, vec, string::{ToString, String}, format};
 use delta_radix_hal::{Hal, Display, Keypad, Key, DisplaySpecialCharacter};
 
 mod glyph;
@@ -12,7 +12,11 @@ mod parse;
 #[derive(PartialEq, Eq, Clone, Debug)]
 enum ApplicationState {
     Normal,
-    FormatSelect,
+    OutputBaseSelect,
+    FormatMenu {
+        bits_digits: String,
+        bits_cursor_pos: usize,
+    },
 }
 
 pub struct CalculatorApplication<'h, H: Hal> {
@@ -61,9 +65,37 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
     fn draw_full(&mut self) {
         self.hal.display_mut().clear();
-        self.draw_header();
-        self.draw_expression();
-        self.draw_result();
+        match self.state {
+            ApplicationState::Normal | ApplicationState::OutputBaseSelect => {
+                self.draw_header();
+                self.draw_expression();
+                self.draw_result();
+            }
+
+            ApplicationState::FormatMenu { ref bits_digits, bits_cursor_pos } => {
+                let display = self.hal.display_mut();
+                let bits_header = "Bits: ";
+
+                display.set_position((bits_header.len() as u8 + bits_cursor_pos as u8) - 1, 0);
+                display.print_special(DisplaySpecialCharacter::CursorLeft);
+                display.print_special(DisplaySpecialCharacter::CursorRight);
+
+                display.set_position(0, 1);
+                display.print_string(bits_header);
+                display.print_string(&bits_digits);
+
+                display.set_position(0, 2);
+                display.print_string("-) Signed  ");
+                if self.eval_config.data_type.signed {
+                    display.print_string(" <");
+                }
+                display.set_position(0, 3);
+                display.print_string("+) Unsigned");
+                if !self.eval_config.data_type.signed {
+                    display.print_string(" <");
+                }
+            }
+        }
     }
     
     fn draw_header(&mut self) {
@@ -150,7 +182,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
         let str;
 
-        if self.state == ApplicationState::FormatSelect {
+        if self.state == ApplicationState::OutputBaseSelect {
             str = "BASE?".to_string();
         } else {
             if let Some(result) = &self.eval_result {
@@ -201,7 +233,12 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                             self.draw_header();
                         }
                         Key::FormatSelect => {
-                            todo!();
+                            let bits_digits = self.eval_config.data_type.bits.to_string();
+                            self.state = ApplicationState::FormatMenu {
+                                bits_cursor_pos: bits_digits.len(),
+                                bits_digits,
+                            };
+                            self.draw_full();
                         }
 
                         _ => (),
@@ -244,7 +281,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                         }
 
                         Key::FormatSelect => {
-                            self.state = ApplicationState::FormatSelect;
+                            self.state = ApplicationState::OutputBaseSelect;
                             self.draw_result();
                         }
             
@@ -257,10 +294,64 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                     }
                 },
             
-            ApplicationState::FormatSelect => match key {
+            ApplicationState::OutputBaseSelect => match key {
                 Key::HexBase => self.set_output_format_and_redraw(Base::Hexadecimal),
                 Key::BinaryBase => self.set_output_format_and_redraw(Base::Binary),
                 Key::FormatSelect => self.set_output_format_and_redraw(Base::Decimal),
+
+                _ => (),
+            }
+
+            ApplicationState::FormatMenu { ref mut bits_digits, ref mut bits_cursor_pos } => match key {
+                Key::Digit(d) => {
+                    bits_digits.push(char::from_digit(d as u32, 10).unwrap());
+                    *bits_cursor_pos += 1;
+                    self.draw_full();
+                }
+
+                Key::Delete => {
+                    if *bits_cursor_pos > 0 {
+                        bits_digits.remove(*bits_cursor_pos - 1);
+                        *bits_cursor_pos -= 1;
+                        self.draw_full();
+                    }
+                }
+                Key::Left => {
+                    if *bits_cursor_pos > 0 {
+                        *bits_cursor_pos -= 1;
+                        self.draw_full();
+                    }
+                }
+                Key::Right => {
+                    if *bits_cursor_pos < bits_digits.len() {
+                        *bits_cursor_pos += 1;
+                        self.draw_full();
+                    }
+                }
+
+                Key::Add => {
+                    self.eval_config.data_type.signed = false;
+                    self.draw_full();
+                }
+                Key::Subtract => {
+                    self.eval_config.data_type.signed = true;
+                    self.draw_full();
+                }
+
+                Key::FormatSelect | Key::Exe => {
+                    // Apply bits evaluation settings
+                    if let Ok(mut bits) = bits_digits.parse() {
+                        // Minimum supported number of bits
+                        if bits < 3 {
+                            bits = 3;
+                        }
+
+                        self.eval_config.data_type.bits = bits;
+                    }
+
+                    self.state = ApplicationState::Normal;
+                    self.draw_full();
+                }
 
                 _ => (),
             }
