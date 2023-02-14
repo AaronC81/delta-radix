@@ -1,0 +1,4 @@
+(sym_lib_table
+  (lib (name "MCU_RaspberryPi_and_Boards")(type "KiCad")(uri "${KIPRJMOD}/MCU_RaspberryPi_and_Boards.kicad_sym")(options "")(descr ""))
+  (lib (name "TXB0108PW")(type "Legacy")(uri "${KIPRJMOD}/TXB0108PW.lib")(options "")(descr ""))
+)
