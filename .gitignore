@@ -2,4 +2,6 @@
 /target
 /design
 /hardware
-/cad
+/cad/**/*.stl
+!/cad/keycaps/keycap_base.stl
+**/.DS_Store
