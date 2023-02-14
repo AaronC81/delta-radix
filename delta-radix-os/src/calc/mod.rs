@@ -233,6 +233,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                             self.draw_header();
                         }
                         Key::FormatSelect => {
+                            self.input_shifted = false;
                             let bits_digits = self.eval_config.data_type.bits.to_string();
                             self.state = ApplicationState::FormatMenu {
                                 bits_cursor_pos: bits_digits.len(),
@@ -350,6 +351,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                     }
 
                     self.state = ApplicationState::Normal;
+                    self.clear_evaluation();
                     self.draw_full();
                 }
 
