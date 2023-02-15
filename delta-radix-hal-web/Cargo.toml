@@ -11,3 +11,5 @@ wasm-bindgen = "0.2.84"
 delta-radix-hal = { path = "../delta-radix-hal" }
 delta-radix-os = { path = "../delta-radix-os" }
 async-trait = "0.1.64"
+js-sys = "0.3.61"
+wasm-bindgen-futures = "0.4.34"

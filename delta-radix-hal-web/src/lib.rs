@@ -1,11 +1,9 @@
 use wasm_bindgen::prelude::wasm_bindgen;
 
-#[wasm_bindgen]
-extern "C" {
-    fn alert(s: &str);
-}
+mod hal;
 
 #[wasm_bindgen]
-pub fn main() {
-    alert("Hello!");
+pub async fn main() {
+    let hal = hal::WebHal::new();
+    delta_radix_os::main(hal).await
 }
