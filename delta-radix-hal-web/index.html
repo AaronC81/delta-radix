@@ -7,6 +7,60 @@
     <title>Delta Radix</title>
 </head>
 <body>
+    <div id="display" style="font-family: monospace; font-size: 25px; border: 1px solid black;">
+        <div id="display-line0">&nbsp;</div>
+        <div id="display-line1">&nbsp;</div>
+        <div id="display-line2">&nbsp;</div>
+        <div id="display-line3">&nbsp;</div>
+    </div>
+
+    <script>
+        // https://stackoverflow.com/a/1431113/2626000
+        String.prototype.replaceAt = function(index, replacement) {
+            return this.substring(0, index) + replacement + this.substring(index + replacement.length);
+        }
+
+        Radix = {}
+        
+        function radix_display_init() {
+            radix_display_clear();
+        }
+        function radix_display_clear() {
+            Radix.display = {
+                cursor: { x: 0, y: 0 },
+                content: [
+                    // 20 chars of spaces, 4 lines
+                    "                    ",
+                    "                    ",
+                    "                    ",
+                    "                    ",
+                ]
+            };
+            __radix_display_apply();
+        }
+        function radix_display_print_char(c) {
+            if (c == ' ') {
+                c = "\xA0";
+            }
+            
+            Radix.display.content[Radix.display.cursor.y] =
+                Radix.display.content[Radix.display.cursor.y].replaceAt(Radix.display.cursor.x, c);
+            __radix_display_apply();
+
+            Radix.display.cursor.x += 1;
+        }
+        function radix_display_set_position(x, y) {
+            Radix.display.cursor = { x, y };
+        }
+        function radix_display_get_position() {
+            return [Radix.display.cursor.x, Radix.display.cursor.y];
+        }
+        function __radix_display_apply() {
+            for (var i = 0; i < 4; i++) {
+                document.getElementById(`display-line${i}`).innerText = Radix.display.content[i];
+            }
+        }
+    </script>
     <script type="module">
         import * as _radix from "./pkg/delta_radix_hal_web.js"
         const radix = await _radix.default();
