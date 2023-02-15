@@ -5,17 +5,119 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delta Radix</title>
+
+    <style>
+        body, html {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        #calculator-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #calculator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            padding-left: 25px;
+            padding-right: 25px;
+            padding-top: 45px;
+            padding-bottom: 25px;
+            border-radius: 25px;
+            background-color: rgb(50, 50, 50);
+        }
+
+        #display {
+            display: inline-block;
+            font-family: monospace;
+            font-size: 27px;
+            border: 1px solid black;
+            background-color: rgb(129, 250, 129);
+        }
+
+        #keypad {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 50px 50px 50px 50px 50px;
+            grid-template-rows: 50px 50px 50px 50px 50px 50px;
+            gap: 20px;
+        }
+
+        #keypad button {
+            text-align: center;
+            font-size: 30px;
+            border: 1px solid grey;
+            border-radius: 5px;
+
+            background-color: black;
+            color: white;
+        }
+
+        #keypad button.orange {
+            background-color: rgb(244, 126, 0);
+        }
+
+        #keypad button.white {
+            background-color: white;
+            color: black;
+        }
+    </style>
 </head>
 <body>
-    <div id="display" style="font-family: monospace; font-size: 25px; border: 1px solid black;">
-        <div id="display-line0">&nbsp;</div>
-        <div id="display-line1">&nbsp;</div>
-        <div id="display-line2">&nbsp;</div>
-        <div id="display-line3">&nbsp;</div>
-    </div>
+    <div id="calculator-container">
+        <div id="calculator">
+            <div id="display">
+                <div id="display-line0">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                <div id="display-line1">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                <div id="display-line2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+                <div id="display-line3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+            </div>
 
-    <div id="keypad">
-        <button onclick="__radix_keypad_emit('0')">0</button>
+            <div id="keypad">
+                <button class="orange" onclick="__radix_keypad_emit('shift')">⇧</button>
+                <button class="orange" onclick="__radix_keypad_emit('menu')">≣</button>
+                <button class="orange" onclick="__radix_keypad_emit('var')">?</button>
+                <button class="orange" onclick="__radix_keypad_emit('left')">&lt;</button>
+                <button class="orange" onclick="__radix_keypad_emit('right')">&gt;</button>
+
+                <button class="white" onclick="__radix_keypad_emit('add')">+</button>
+                <button class="white" onclick="__radix_keypad_emit('subtract')">−</button>
+                <button class="white" onclick="__radix_keypad_emit('multiply')">×</button>
+                <button class="white" onclick="__radix_keypad_emit('divide')">÷</button>
+                <button class="orange" onclick="__radix_keypad_emit('delete')">␡</button>
+
+                <button onclick="__radix_keypad_emit('7')">7</button>
+                <button onclick="__radix_keypad_emit('8')">8</button>
+                <button onclick="__radix_keypad_emit('9')">9</button>
+                <button onclick="__radix_keypad_emit('E')">E</button>
+                <button onclick="__radix_keypad_emit('F')">F</button>
+
+                <button onclick="__radix_keypad_emit('4')">4</button>
+                <button onclick="__radix_keypad_emit('5')">5</button>
+                <button onclick="__radix_keypad_emit('6')">6</button>
+                <button onclick="__radix_keypad_emit('C')">C</button>
+                <button onclick="__radix_keypad_emit('D')">D</button>
+
+                <button onclick="__radix_keypad_emit('1')">1</button>
+                <button onclick="__radix_keypad_emit('2')">2</button>
+                <button onclick="__radix_keypad_emit('3')">3</button>
+                <button onclick="__radix_keypad_emit('A')">A</button>
+                <button onclick="__radix_keypad_emit('B')">B</button>
+
+                <button onclick="__radix_keypad_emit('0')">0</button>
+                <button class="white" onclick="__radix_keypad_emit('format')">→</button>
+                <button class="white" onclick="__radix_keypad_emit('hex')">x</button>
+                <button class="white" onclick="__radix_keypad_emit('bin')">b</button>
+                <button class="orange" onclick="__radix_keypad_emit('exe')">=</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -89,6 +191,7 @@
         }
     </script>
     <script type="module">
+        // Import the compiled WebAssembly module and start the OS
         import * as _radix from "./pkg/delta_radix_hal_web.js"
         const radix = await _radix.default();
         radix.start_os();
