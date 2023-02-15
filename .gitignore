@@ -19,3 +19,4 @@ hardware/**/*.tmp
 hardware/**/*-save.pro
 hardware/**/*-save.kicad_pcb
 hardware/**/fp-info-cache
+delta-radix-hal-web/dist

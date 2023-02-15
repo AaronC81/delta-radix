@@ -1,0 +1,11 @@
+[package]
+name = "delta-radix-hal-web"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+wasm-bindgen = "0.2.84"
+delta-radix-hal = { path = "../delta-radix-hal" }
+delta-radix-os = { path = "../delta-radix-os" }
+async-trait = "0.1.64"
+yew = { version = "0.20.0", features = ["csr"] }

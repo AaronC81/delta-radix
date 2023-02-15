@@ -4,5 +4,6 @@ members = [
     "delta-radix-os",
     "delta-radix-hal-sim",
     "delta-radix-hal-pico",
+    "delta-radix-hal-web",
     "flex-int", 
 ]
