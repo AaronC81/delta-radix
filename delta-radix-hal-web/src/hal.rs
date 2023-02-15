@@ -32,7 +32,11 @@ pub struct WebKeypad;
 #[async_trait(?Send)]
 impl Keypad for WebKeypad {
     async fn wait_key(&mut self) -> Key {
-        todo!();
+        let value = radix_keypad_wait_key().await;
+        match value.as_string().expect("non-string returned from `radix_keypad_wait_key`").as_str() {
+            "0" => Key::Digit(0),
+            _ => panic!("unknown keypad key"),
+        }
     }
 }
 

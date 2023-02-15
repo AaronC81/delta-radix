@@ -14,13 +14,22 @@
         <div id="display-line3">&nbsp;</div>
     </div>
 
+    <div id="keypad">
+        <button onclick="__radix_keypad_emit('0')">0</button>
+    </div>
+
     <script>
         // https://stackoverflow.com/a/1431113/2626000
         String.prototype.replaceAt = function(index, replacement) {
             return this.substring(0, index) + replacement + this.substring(index + replacement.length);
         }
 
-        Radix = {}
+        Radix = {
+            display: null, // Will be filled in by `radix_display_clear`
+            keypad: {
+                pending_key: null,
+            }
+        }
         
         function radix_display_init() {
             radix_display_clear();
@@ -39,7 +48,7 @@
             __radix_display_apply();
         }
         function radix_display_print_char(c) {
-            if (c == ' ') {
+            if (c === ' ') {
                 c = "\xA0";
             }
             
@@ -59,6 +68,24 @@
             for (var i = 0; i < 4; i++) {
                 document.getElementById(`display-line${i}`).innerText = Radix.display.content[i];
             }
+        }
+
+        async function radix_keypad_wait_key() {
+            while (1) {
+                if (Radix.keypad.pending_key !== null) {
+                    key = Radix.keypad.pending_key;
+                    Radix.keypad.pending_key = null;
+                    return key;
+                }
+                await radix_time_sleep(5);
+            }
+        }
+        async function __radix_keypad_emit(key) {
+            Radix.keypad.pending_key = key;
+        }
+
+        async function radix_time_sleep(ms) {
+            await new Promise(resolve => setTimeout(resolve, ms));
         }
     </script>
     <script type="module">
