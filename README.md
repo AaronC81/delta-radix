@@ -21,6 +21,8 @@ This repository is a Cargo workspace comprising a handful of crates. These are:
 - `delta-radix-hal` - Traits which the OS uses to interact with hardware (keypad, display, etc)
 - `delta-radix-hal-pico` - Implementation of HAL traits for the Raspberry Pi Pico
 - `delta-radix-hal-sim` - Implementation of HAL traits for a simulator which runs in the terminal
+- `delta-radix-hal-web` - Implementation of HAL traits for a browser-based simulator with WebAssembly
+  (build with `wasm-pack build --target web`, then visit `index.html`)
 - `flex-int` - Arbitrary-precision arithmetic library used by the OS
 
 The HAL implementations are the executable targets which should be flashed/run.
