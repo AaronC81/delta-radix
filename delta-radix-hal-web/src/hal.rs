@@ -34,7 +34,7 @@ impl Keypad for WebKeypad {
     async fn wait_key(&mut self) -> Key {
         let value = radix_keypad_wait_key().await;
         match value.as_string().expect("non-string returned from `radix_keypad_wait_key`").as_str() {
-            x if x.len() == 1 && x.chars().next().unwrap().is_digit(16) => {
+            x if x.len() == 1 && x.chars().next().unwrap().is_ascii_hexdigit() => {
                 Key::Digit(char::to_digit(x.chars().next().unwrap(), 16).unwrap() as u8)
             },
 

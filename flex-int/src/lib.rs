@@ -1025,9 +1025,9 @@ impl FlexInt {
                     return false
                 }
             }
-            return true
+            true
         } else {
-            return false
+            false
         }
     }
 

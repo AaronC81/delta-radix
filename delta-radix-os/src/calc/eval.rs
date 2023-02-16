@@ -37,8 +37,8 @@ pub fn evaluate(node: &Node, config: &Configuration) -> EvaluationResult {
         NodeKind::Number(num) => EvaluationResult::new(num.clone(), false),
         
         NodeKind::Add(a, b) => {
-            let a = evaluate(&a, config);
-            let b = evaluate(&b, config);
+            let a = evaluate(a, config);
+            let b = evaluate(b, config);
 
             let (result, overflow) = a.result.add(&b.result, config.data_type.signed);
             EvaluationResult::new(result, a.overflow || b.overflow || overflow)

@@ -132,14 +132,9 @@ impl<'g> Parser<'g> {
             };
 
             // Gather digits
-            loop {
-                match self.here() {
-                    Some(Glyph::Digit(d)) => {
-                        digits.push(char::from_digit(d as u32, 16).unwrap());
-                        self.advance();
-                    },
-                    _ => break,
-                }
+            while let Some(Glyph::Digit(d)) = self.here() {
+                digits.push(char::from_digit(d as u32, 16).unwrap());
+                self.advance();
             }
 
             // Check for base at end
@@ -179,12 +174,10 @@ impl<'g> Parser<'g> {
             }
 
             Ok(Node { span, kind: NodeKind::Number(num) })
+        } else if let Some(glyph) = self.here() {
+            Err(self.create_error(ParserErrorKind::UnexpectedGlyph(glyph)))
         } else {
-            if let Some(glyph) = self.here() {
-                Err(self.create_error(ParserErrorKind::UnexpectedGlyph(glyph)))
-            } else {
-                Err(self.create_error(ParserErrorKind::UnexpectedEnd))
-            }
+            Err(self.create_error(ParserErrorKind::UnexpectedEnd))
         }
     }
 

@@ -82,7 +82,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
                 display.set_position(0, 1);
                 display.print_string(bits_header);
-                display.print_string(&bits_digits);
+                display.print_string(bits_digits);
 
                 display.set_position(0, 2);
                 display.print_string("-) Signed  ");
@@ -133,8 +133,8 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         // Try to parse and get warning spans
         let (parser, _) = self.parse();
         let warning_indices = parser.constant_overflow_spans.iter()
-            .map(|s| s.indices().collect::<Vec<_>>())
-            .flatten().collect::<Vec<_>>();
+            .flat_map(|s| s.indices().collect::<Vec<_>>())
+            .collect::<Vec<_>>();
 
         self.constant_overflows = !warning_indices.is_empty();
         

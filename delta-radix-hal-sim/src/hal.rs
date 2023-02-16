@@ -1,4 +1,4 @@
-use std::{io::{stdout, Write, Stdout, Stdin, stdin}, cell::RefCell, process::exit, time::Duration};
+use std::{io::{stdout, Write, Stdout, Stdin, stdin}, cell::RefCell, time::Duration};
 
 use async_trait::async_trait;
 use delta_radix_hal::{Display, Keypad, Key, Hal, Time};
@@ -48,7 +48,7 @@ impl Display for SimDisplay {
         }
         self.x += 1;
 
-        write!(self.stdout, "{}", c).unwrap();
+        write!(self.stdout, "{c}").unwrap();
         self.stdout.flush().unwrap();
     }
 
@@ -93,7 +93,7 @@ impl Keypad for SimKeypad {
     async fn wait_key(&mut self) -> Key {
         loop {
             match self.keys.borrow_mut().next().unwrap().unwrap() {                                
-                TermKey::Char(c) if c.is_digit(10)
+                TermKey::Char(c) if c.is_ascii_digit()
                     => return Key::Digit(c.to_digit(10).unwrap() as u8),
                 TermKey::Char('x') => return Key::HexBase,
                 TermKey::Char('b') => return Key::BinaryBase,

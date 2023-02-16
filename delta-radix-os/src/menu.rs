@@ -19,8 +19,6 @@ pub async fn show_menu(hal: &mut impl Hal) {
     loop {
         match keypad.wait_key().await {
             Key::Digit(1) => {
-                drop(display);
-                drop(keypad);
                 hal.enter_bootloader().await;
                 return
             },
