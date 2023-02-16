@@ -1,10 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(alloc_error_handler)]
-#![feature(default_alloc_error_handler)]
 #![feature(generic_const_exprs)]
-
-use core::panic::PanicInfo;
 
 use alloc_cortex_m::CortexMHeap;
 use cortex_m_rt::entry;
@@ -113,6 +110,10 @@ fn main() -> ! {
     }
 }
 
+#[cfg(not(any(unix, windows)))]
+use core::panic::PanicInfo;
+
+#[cfg(not(any(unix, windows)))]
 #[panic_handler]
 fn panic(_: &PanicInfo) -> ! {
     loop {}
