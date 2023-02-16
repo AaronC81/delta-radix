@@ -930,6 +930,10 @@ impl FlexInt {
     /// 
     /// let (i, _) = FlexInt::from_signed_decimal_string("-1234", 16).unwrap();
     /// assert_eq!(i.to_signed_decimal_string(), "-1234");
+    /// 
+    /// let (i, over) = FlexInt::from_signed_decimal_string("254", 8).unwrap();
+    /// assert_eq!(i.to_signed_decimal_string(), "-2");
+    /// assert!(over);
     /// ```
     pub fn to_signed_decimal_string(&self) -> String {
         self.to_signed_string(Self::to_unsigned_decimal_string)
