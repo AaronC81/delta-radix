@@ -1,8 +1,9 @@
 use core::ops::Range;
 
 use alloc::{vec, vec::Vec, string::String, boxed::Box};
+use delta_radix_hal::Glyph;
 
-use super::{glyph::{Glyph, Base}, eval};
+use super::{eval, Base};
 use flex_int::FlexInt;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -148,13 +149,13 @@ impl<'g> Parser<'g> {
         }
 
         // Number
-        if let Some(Glyph::Digit(_) | Glyph::Base(_)) = self.here() {
+        if let Some(g @ (Glyph::Digit(_) | Glyph::HexBase | Glyph::BinaryBase | Glyph::DecimalBase)) = self.here() {
             let start = self.ptr;
             let mut digits = vec![];
             let mut base = None;
 
             // Check for base at start
-            if let Some(Glyph::Base(b)) = self.here() {
+            if let Some(b) = Base::from_glyph(g) {
                 self.advance();
                 base = Some(b);
             };
@@ -166,12 +167,12 @@ impl<'g> Parser<'g> {
             }
 
             // Check for base at end
-            if let Some(Glyph::Base(b)) = self.here() {
+            if let Some(b) = self.here().map(Base::from_glyph) {
                 if base.is_some() {
                     return Err(self.create_error(ParserErrorKind::DuplicateBase));
                 }
                 self.advance();
-                base = Some(b);
+                base = b;
             };
 
             // Construct string of digits, considering negation

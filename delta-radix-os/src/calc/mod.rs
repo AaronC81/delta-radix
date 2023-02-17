@@ -1,10 +1,9 @@
 use alloc::{vec::Vec, vec, string::{ToString, String}, format};
-use delta_radix_hal::{Hal, Display, Keypad, Key, DisplaySpecialCharacter};
+use delta_radix_hal::{Hal, Display, Keypad, Key, DisplaySpecialCharacter, Glyph};
 
-mod glyph;
 use crate::menu;
 
-use self::{glyph::{Glyph, Base}, eval::{EvaluationResult, Configuration, DataType, evaluate}, parse::{Parser, Node, ParserError}};
+use self::{eval::{EvaluationResult, Configuration, DataType, evaluate}, parse::{Parser, Node, ParserError}};
 
 mod eval;
 mod parse;
@@ -17,6 +16,24 @@ enum ApplicationState {
         bits_digits: String,
         bits_cursor_pos: usize,
     },
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Base {
+    Decimal,
+    Hexadecimal,
+    Binary,
+}
+
+impl Base {
+    fn from_glyph(glyph: Glyph) -> Option<Self> {
+        match glyph {
+            Glyph::HexBase => Some(Base::Hexadecimal),
+            Glyph::BinaryBase => Some(Base::Binary),
+            Glyph::DecimalBase => Some(Base::Decimal),
+            _ => None,
+        }
+    }
 }
 
 pub struct CalculatorApplication<'h, H: Hal> {
@@ -144,7 +161,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         disp.set_position(0, 2);
         let mut chars_written = 0;
         for glyph in &self.glyphs {
-            disp.print_char(glyph.to_char());
+            disp.print_glyph(*glyph);
             chars_written += 1;
         }
         for _ in chars_written..20 {
@@ -247,8 +264,8 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                 } else {
                     match key {
                         Key::Digit(d) => self.insert_and_redraw(Glyph::Digit(d)),
-                        Key::HexBase => self.insert_and_redraw(Glyph::Base(Base::Hexadecimal)),
-                        Key::BinaryBase => self.insert_and_redraw(Glyph::Base(Base::Binary)),
+                        Key::HexBase => self.insert_and_redraw(Glyph::HexBase),
+                        Key::BinaryBase => self.insert_and_redraw(Glyph::BinaryBase),
             
                         Key::Add => self.insert_and_redraw(Glyph::Add),
                         Key::Subtract => self.insert_and_redraw(Glyph::Subtract),

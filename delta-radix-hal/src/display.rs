@@ -1,3 +1,17 @@
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Glyph {
+    Digit(u8),
+
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+
+    HexBase,
+    BinaryBase,
+    DecimalBase,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DisplaySpecialCharacter {
     CursorLeft,
@@ -30,6 +44,23 @@ pub trait Display {
                 DisplaySpecialCharacter::Warning => '!',
                 DisplaySpecialCharacter::CursorLeftWithWarning => '\\',
                 DisplaySpecialCharacter::CursorRightWithWarning => '/',
+            }
+        )
+    }
+
+    fn print_glyph(&mut self, glyph: Glyph) {
+        self.print_char(
+            match glyph {
+                Glyph::Digit(d) => char::from_digit(d as u32, 16).unwrap().to_uppercase().next().unwrap(),
+    
+                Glyph::Add => '+',
+                Glyph::Subtract => '-',
+                Glyph::Multiply => '×',
+                Glyph::Divide => '÷',
+    
+                Glyph::HexBase => 'x',
+                Glyph::BinaryBase => 'b',
+                Glyph::DecimalBase => 'd',
             }
         )
     }
