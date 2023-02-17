@@ -12,6 +12,23 @@ pub enum Glyph {
     DecimalBase,
 }
 
+impl Glyph {
+    pub fn describe(&self) -> &'static str {
+        match self {
+            Self::Digit(_) => "digit",
+
+            Self::Add => "add",
+            Self::Subtract => "subtract",
+            Self::Multiply => "multiply",
+            Self::Divide => "divide",
+
+            Self::HexBase => "hex base",
+            Self::BinaryBase => "bin base",
+            Self::DecimalBase => "dec base",
+        }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum DisplaySpecialCharacter {
     CursorLeft,

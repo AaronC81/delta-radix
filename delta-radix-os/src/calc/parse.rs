@@ -1,6 +1,6 @@
 use core::ops::Range;
 
-use alloc::{vec, vec::Vec, string::String, boxed::Box};
+use alloc::{vec, vec::Vec, string::{String, ToString}, boxed::Box, format};
 use delta_radix_hal::Glyph;
 
 use super::{eval, Base};
@@ -50,12 +50,29 @@ pub struct ParserError {
     kind: ParserErrorKind,
 }
 
+impl ParserError {
+    pub fn describe(&self) -> String {
+        self.kind.describe()
+    }
+}
+
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum ParserErrorKind {
     DuplicateBase,
     InvalidNumber,
     UnexpectedGlyph(Glyph),
     UnexpectedEnd,
+}
+
+impl ParserErrorKind {
+    pub fn describe(&self) -> String {
+        match self {
+            ParserErrorKind::DuplicateBase => "duplicate base".to_string(),
+            ParserErrorKind::InvalidNumber => "invalid number".to_string(),
+            ParserErrorKind::UnexpectedGlyph(g) => format!("unexpected {}", g.describe()),
+            ParserErrorKind::UnexpectedEnd => "unexpected end".to_string(),
+        }
+    }
 }
 
 pub struct Parser<'g> {

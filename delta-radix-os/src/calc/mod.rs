@@ -224,7 +224,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                         }
                         
                     },
-                    Err(_) => str = "parse error".to_string(),
+                    Err(e) => str = e.describe(),
                 }
             } else {
                 str = str::repeat(" ", 20);
