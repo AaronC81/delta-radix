@@ -62,6 +62,7 @@ pub struct Parser<'g> {
     pub ptr: usize,
     pub eval_config: eval::Configuration,
     pub constant_overflow_spans: Vec<GlyphSpan>,
+    pub next_number_negated: bool,
 }
 
 impl<'g> Parser<'g> {
@@ -71,6 +72,7 @@ impl<'g> Parser<'g> {
             ptr: 0,
             eval_config,
             constant_overflow_spans: vec![],
+            next_number_negated: false,
         }
     }
 
@@ -102,11 +104,11 @@ impl<'g> Parser<'g> {
     }
 
     fn parse_add_sub(&mut self) -> Result<Node, ParserError> {
-        let mut current = self.parse_bottom()?;
+        let mut current = self.parse_mul_div()?;
 
         while let Some(op @ (Glyph::Add | Glyph::Subtract)) = self.here() {
             self.advance();
-            let rhs = self.parse_bottom()?;
+            let rhs = self.parse_mul_div()?;
             let span = current.span.merge(rhs.span);
             let kind = match op {
                 Glyph::Add => NodeKind::Add(Box::new(current), Box::new(rhs)),
@@ -119,7 +121,33 @@ impl<'g> Parser<'g> {
         Ok(current)
     }
 
+    fn parse_mul_div(&mut self) -> Result<Node, ParserError> {
+        let mut current = self.parse_bottom()?;
+
+        while let Some(op @ (Glyph::Multiply | Glyph::Divide)) = self.here() {
+            self.advance();
+            let rhs = self.parse_bottom()?;
+            let span = current.span.merge(rhs.span);
+            let kind = match op {
+                Glyph::Multiply => NodeKind::Multiply(Box::new(current), Box::new(rhs)),
+                Glyph::Divide => NodeKind::Divide(Box::new(current), Box::new(rhs)),
+                _ => unreachable!(),
+            };
+            current = Node { span, kind };
+        }
+
+        Ok(current)
+    }
+
     fn parse_bottom(&mut self) -> Result<Node, ParserError> {
+        // Subtract as negation
+        if let Some(Glyph::Subtract) = self.here() {
+            self.next_number_negated = !self.next_number_negated;
+            self.advance();
+            return self.parse_bottom();
+        }
+
+        // Number
         if let Some(Glyph::Digit(_) | Glyph::Base(_)) = self.here() {
             let start = self.ptr;
             let mut digits = vec![];
@@ -146,18 +174,32 @@ impl<'g> Parser<'g> {
                 base = Some(b);
             };
 
-            // Construct string of digits and parse number
-            let str: String = digits.into_iter().collect();
-            let (num, overflow) =
+            // Construct string of digits, considering negation
+            let mut str: String = digits.into_iter().collect();
+            let mut force_parse_signed = false;
+            if self.next_number_negated {
+                str.insert(0, '-');
+                self.next_number_negated = false;
+
+                // We'll need to parse this number as signed, even though the underlying data type
+                // is unsigned
+                if !self.eval_config.data_type.signed {
+                    force_parse_signed = true;
+                }
+            }
+
+            // Parse number
+            let parse_signed = self.eval_config.data_type.signed || force_parse_signed;
+            let (num, mut overflow) =
                 match base {
                     Some(Base::Decimal) | None => 
-                        if self.eval_config.data_type.signed {
+                        if parse_signed {
                             FlexInt::from_signed_decimal_string(&str, self.eval_config.data_type.bits)
                         } else {
                             FlexInt::from_unsigned_decimal_string(&str, self.eval_config.data_type.bits)
                         }
                     Some(Base::Hexadecimal) =>
-                        if self.eval_config.data_type.signed {
+                        if parse_signed {
                             FlexInt::from_signed_hex_string(&str, self.eval_config.data_type.bits)
                         } else {
                             FlexInt::from_unsigned_hex_string(&str, self.eval_config.data_type.bits)
@@ -165,6 +207,12 @@ impl<'g> Parser<'g> {
                     _ => todo!("base not yet implemented"),
                 }
                     .ok_or(self.create_error(ParserErrorKind::InvalidNumber))?;
+
+            // Force-parsing a negative number will always result in overflow (because the data type
+            // can't represent the parsed number)
+            if force_parse_signed {
+                overflow = true;
+            }
 
             // Add warning region of number parsing overflowed
             let length = self.ptr - start;

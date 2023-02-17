@@ -126,6 +126,8 @@ impl<'d> ButtonMatrix<'d> {
 
             (0, 1) => Some(Key::Add),
             (1, 1) => Some(Key::Subtract),
+            (2, 1) => Some(Key::Multiply),
+            (3, 1) => Some(Key::Divide),
 
             (4, 1) => Some(Key::Delete),
 
