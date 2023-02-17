@@ -192,12 +192,12 @@ impl<'g> Parser<'g> {
             }
 
             // Check for base at end
-            if let Some(b) = self.here().map(Base::from_glyph) {
+            if let Some(b) = self.here().map(Base::from_glyph).flatten() {
                 if base.is_some() {
                     return Err(self.create_error(ParserErrorKind::DuplicateBase));
                 }
                 self.advance();
-                base = b;
+                base = Some(b);
             };
 
             // Construct string of digits, considering negation
