@@ -95,6 +95,14 @@ impl<'g> Parser<'g> {
     }
 
     pub fn parse(&mut self) -> Result<Node, ParserError> {
+        // Special case - if there are no tokens, parse to 0
+        if self.glyphs.is_empty() {
+            return Ok(Node {
+                span: GlyphSpan { start: 0, length: 0 },
+                kind: NodeKind::Number(FlexInt::new(self.eval_config.data_type.bits)),
+            })
+        }
+
         let result = self.parse_top_level()?;
 
         // Check we reached the end
