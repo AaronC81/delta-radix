@@ -116,5 +116,7 @@ use core::panic::PanicInfo;
 #[cfg(not(any(unix, windows)))]
 #[panic_handler]
 fn panic(_: &PanicInfo) -> ! {
+    use hal::enter_bootloader;
+    enter_bootloader();
     loop {}
 }
