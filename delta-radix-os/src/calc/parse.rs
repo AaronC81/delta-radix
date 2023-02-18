@@ -230,7 +230,12 @@ impl<'g> Parser<'g> {
                         } else {
                             FlexInt::from_unsigned_hex_string(&str, self.eval_config.data_type.bits)
                         }
-                    _ => todo!("base not yet implemented"),
+                    Some(Base::Binary) => 
+                        if parse_signed {
+                            FlexInt::from_signed_binary_string(&str, self.eval_config.data_type.bits)
+                        } else {
+                            FlexInt::from_unsigned_binary_string(&str, self.eval_config.data_type.bits)
+                        }
                 }
                     .ok_or(self.create_error(ParserErrorKind::InvalidNumber))?;
 

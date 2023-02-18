@@ -220,7 +220,13 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                                     result.result.to_unsigned_hex_string()
                                 });
                             }
-                            Base::Binary => todo!(),
+                            Base::Binary => {
+                                str = format!("b{}", if self.eval_config.data_type.signed {
+                                    result.result.to_signed_binary_string()
+                                } else {
+                                    result.result.to_unsigned_binary_string()
+                                });
+                            }
                         }
                         
                     },

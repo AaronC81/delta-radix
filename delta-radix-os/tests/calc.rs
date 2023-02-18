@@ -72,3 +72,38 @@ fn test_hex_result() {
     assert_eq!(hal.result(), "xA1C");
     assert!(!hal.overflow());
 }
+
+#[test]
+fn test_binary_input() {
+    let hal = run_os(&keys!(
+        // Both base as a prefix...
+        Key::BinaryBase,
+        Key::Digit(1),
+        Key::Digit(1),
+        Key::Digit(0),
+        Key::Digit(1),
+        Key::Add,
+        // ...and a suffix
+        Key::Digit(1),
+        Key::Digit(1),
+        Key::Digit(0),
+        Key::BinaryBase,
+        Key::Exe,
+    ));
+    assert_eq!(hal.expression(), "b1101+110b");
+    assert_eq!(hal.result(), (0b1101 + 0b110).to_string());
+    assert!(!hal.overflow());
+}
+
+#[test]
+fn test_binary_result() {
+    let hal = run_os(&keys!(
+        Key::FormatSelect,
+        Key::BinaryBase,
+        Number(0b11011101),
+        Key::Exe,
+    ));
+    assert_eq!(hal.expression(), 0b11011101.to_string());
+    assert_eq!(hal.result(), "b11011101");
+    assert!(!hal.overflow());
+}
