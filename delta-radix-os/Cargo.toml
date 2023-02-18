@@ -6,5 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-trait = "0.1.64"
 delta-radix-hal = { path = "../delta-radix-hal" }
 flex-int = { path = "../flex-int" }
+
+[dev-dependencies]
+futures = "0.3.26"
