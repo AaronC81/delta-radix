@@ -117,6 +117,6 @@ use core::panic::PanicInfo;
 #[panic_handler]
 fn panic(_: &PanicInfo) -> ! {
     use hal::enter_bootloader;
-    enter_bootloader();
+    unsafe { enter_bootloader(); }
     loop {}
 }
