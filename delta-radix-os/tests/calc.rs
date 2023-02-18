@@ -41,3 +41,34 @@ fn test_overflow() {
     assert_eq!(hal.result(), "0");
     assert!(hal.overflow());
 }
+
+#[test]
+fn test_hex_input() {
+    let hal = run_os(&keys!(
+        // Both base as a prefix...
+        Key::HexBase,
+        Key::Digit(1),
+        Key::Digit(0xA),
+        Key::Add,
+        // ...and a suffix
+        Key::Digit(0xC),
+        Key::HexBase,
+        Key::Exe,
+    ));
+    assert_eq!(hal.expression(), "x1A+Cx");
+    assert_eq!(hal.result(), "38");
+    assert!(!hal.overflow());
+}
+
+#[test]
+fn test_hex_result() {
+    let hal = run_os(&keys!(
+        Key::FormatSelect,
+        Key::HexBase,
+        Number(0xA1C),
+        Key::Exe,
+    ));
+    assert_eq!(hal.expression(), 0xA1C.to_string());
+    assert_eq!(hal.result(), "xA1C");
+    assert!(!hal.overflow());
+}
