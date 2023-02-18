@@ -10,8 +10,6 @@ type LcdD5 = Gpio8;
 type LcdD6 = Gpio7;
 type LcdD7 = Gpio6;
 
-// TODO: Need to support custom characters at some point
-
 pub struct LcdDisplay<'d> {
     pub delay: &'d mut Delay,
     pub lcd: HD44780<
