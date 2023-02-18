@@ -21,6 +21,8 @@ pub enum Key {
     BinaryBase,
 
     FormatSelect,
+
+    DebugTerminate,
 }
 
 #[async_trait(?Send)]

@@ -308,7 +308,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                             self.draw_header();
                         }
 
-                        Key::Menu => (),
+                        Key::Menu | Key::DebugTerminate => (),
                     }
                 },
             

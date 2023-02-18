@@ -1,6 +1,10 @@
 use delta_radix_hal::{Hal, Display, Keypad, Key};
 
 pub async fn check_menu(hal: &mut impl Hal, key: Key) -> bool {
+    if key == Key::DebugTerminate {
+        panic!("debug terminate");
+    }
+    
     if key == Key::Menu {
         show_menu(hal).await;
         true
