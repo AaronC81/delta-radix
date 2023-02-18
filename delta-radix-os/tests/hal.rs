@@ -1,7 +1,10 @@
-use std::{collections::VecDeque, time::Duration};
+use std::{collections::VecDeque, time::Duration, panic::catch_unwind};
 
 use async_trait::async_trait;
 use delta_radix_hal::{Key, Display, Keypad, Time, Hal};
+use delta_radix_os::main;
+use futures::executor::block_on;
+use panic_message::panic_message;
 
 pub struct TestDisplay {
     lines: [String; 4],
@@ -36,6 +39,7 @@ impl Display for TestDisplay {
             (self.cursor.0 as usize)..(self.cursor.0 as usize + 1),
             &c.to_string()
         );
+        self.cursor.0 += 1;
     }
 
     fn set_position(&mut self, x: u8, y: u8) {
@@ -76,6 +80,22 @@ impl TestHal {
             time: TestTime,
         }
     }
+
+    pub fn display_contents(&self) -> String {
+        self.display.lines.join("\n")
+    }
+
+    pub fn display_line(&self, index: usize) -> String {
+        self.display.lines[index].clone()
+    }
+
+    pub fn result(&self) -> String {
+        self.display_line(3).trim().to_string()
+    }
+
+    pub fn expression(&self) -> String {
+        self.display_line(2).trim().to_string()
+    }
 }
 
 #[async_trait(?Send)]
@@ -100,4 +120,21 @@ impl Hal for TestHal {
     async fn enter_bootloader(&mut self) {
         panic!("test entered bootloader")
     }
+}
+
+pub fn run_os(keys: &[Key]) -> TestHal {
+    let mut hal = TestHal::new(
+        &keys.iter().chain(&[Key::DebugTerminate]).copied().collect::<Vec<_>>()[..]
+    );
+    let hal_ptr = &mut hal as *mut TestHal;
+    
+    match catch_unwind(|| block_on(main(unsafe { hal_ptr.as_mut().unwrap() }))) {
+        // This is what we expect from pressing the DebugTerminate key!
+        Err(e) if panic_message(&e) == "debug terminate" => (),
+
+        Ok(()) => panic!("OS returned early"),
+        Err(e) => panic!("panic within OS: {:?}", panic_message(&e))
+    }
+
+    hal
 }
