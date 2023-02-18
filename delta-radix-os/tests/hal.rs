@@ -96,6 +96,14 @@ impl TestHal {
     pub fn expression(&self) -> String {
         self.display_line(2).trim().to_string()
     }
+
+    pub fn overflow(&self) -> bool {
+        self.display_line(0).ends_with("OVER")
+    }
+
+    pub fn format(&self) -> String {
+        self.display_line(0).split_once(' ').unwrap().0.to_string()
+    }
 }
 
 #[async_trait(?Send)]
