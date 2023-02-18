@@ -1,4 +1,4 @@
-use alloc::string::ToString;
+use alloc::{string::ToString, vec::Vec};
 
 use crate::FlexInt;
 
@@ -154,6 +154,74 @@ impl FlexInt {
     /// ```
     pub fn from_signed_hex_string(s: &str, size: usize) -> Option<(Self, bool)> {
         Self::from_signed_string(s, size, Self::from_unsigned_hex_string)
+    }
+
+    /// Creates a new unsigned integer of a given size by parsing a string of binary digits.
+    /// 
+    /// Only '1' and '0' are permitted in the string; this will return None if other characters are
+    /// encountered.
+    /// 
+    /// Also returns a boolean indicating whether the digits overflow the given size.
+    /// 
+    /// ```rust
+    /// # use flex_int::FlexInt;
+    /// let (i_str, over) = FlexInt::from_unsigned_binary_string("1101100110", 16).unwrap();
+    /// let i_num = FlexInt::from_int(0b1101100110, 16);
+    /// assert_eq!(i_str, i_num);
+    /// assert!(!over);
+    /// 
+    /// let (i_str, over) = FlexInt::from_unsigned_binary_string("1101100110", 8).unwrap();
+    /// let i_num = FlexInt::from_int(0b01100110, 8);
+    /// assert_eq!(i_str, i_num);
+    /// assert!(over);
+    /// ```
+    pub fn from_unsigned_binary_string(s: &str, size: usize) -> Option<(Self, bool)> {
+        let mut bits = s.chars()
+            // Skip leading zeroes
+            .skip_while(|x| *x == '0')
+            // Create true/false bits from characters
+            .map(|x| match x {
+                '0' => Some(false),
+                '1' => Some(true),
+                _ => None
+            })
+            .collect::<Option<Vec<_>>>()?
+            // Reverse to give our LSB->MSB order
+            .into_iter()
+            .rev()
+            .collect::<Vec<_>>();
+
+        if bits.len() > size {
+            // We already reversed, so we can pop from the end to trim
+            while bits.len() > size {
+                bits.pop();
+            }
+            return Some((Self::from_bits(&bits), true))
+        }
+
+        // Add padding bits if needed
+        while bits.len() < size {
+            bits.push(false);
+        }
+        Some((Self::from_bits(&bits), false))
+    }
+
+    /// Creates a new signed integer of a given size by parsing a string of binary digits.
+    /// 
+    /// The first character may optionally be a sign, then only '1' or '0' are permitted in the
+    /// string. This will return None if other characters are encountered.
+    /// 
+    /// Also returns a boolean indicating whether the digits overflow the given size.
+    /// 
+    /// ```rust
+    /// # use flex_int::FlexInt;
+    /// let (i_str, over) = FlexInt::from_signed_binary_string("-1101110101", 16).unwrap();
+    /// let i_num = FlexInt::from_int(0b1101110101, 16).negate().unwrap();
+    /// assert_eq!(i_str, i_num);
+    /// assert!(!over);
+    /// ```
+    pub fn from_signed_binary_string(s: &str, size: usize) -> Option<(Self, bool)> {
+        Self::from_signed_string(s, size, Self::from_unsigned_binary_string)
     }
 
     /// A convenience methods which performs a signed string-to-number conversion by using an

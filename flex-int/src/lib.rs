@@ -92,6 +92,22 @@ impl FlexInt {
         self.bits.len()
     }
 
+    /// Gets the bits of this number, with any leading zeroes (i.e. those at the most-significant
+    /// bit) removed.
+    pub(crate) fn bits_without_leading_zeroes(&self) -> Vec<bool> {
+        // Remember our bit representation goes from LSB to MSB, so in our representation they're
+        // actually trailing - handle this by reversing first
+        self.bits.iter()
+            .rev()
+            .copied()
+            .skip_while(|x| !*x)
+            .collect::<Vec<_>>()
+            .iter()
+            .rev()
+            .copied()
+            .collect::<Vec<_>>()
+    }
+
     /// Determines whether this number is storing the largest possible negative value for its number
     /// of bits - that is, the most-significant bit is set, and no others are.
     pub(crate) fn is_largest_possible_negative(&self) -> bool {

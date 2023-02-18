@@ -81,19 +81,7 @@ impl FlexInt {
         }
 
         let mut result = "".to_string();
-
-        // Do some twiddling to chop off the "leading" zeroes
-        // Remember our bit representation goes from LSB to MSB, so in our representation they're
-        // actually trailing - handle this by reversing first
-        let bits = self.bits.iter()
-            .rev()
-            .copied()
-            .skip_while(|x| !*x)
-            .collect::<Vec<_>>()
-            .iter()
-            .rev()
-            .copied()
-            .collect::<Vec<_>>();
+        let bits = self.bits_without_leading_zeroes();
 
         // Iterate through the bits of this number, in chunks of 4, from LSB to MSB
         // (Pad with 0s if we don't have a full 4)
@@ -129,6 +117,28 @@ impl FlexInt {
         result
     }
 
+    /// Converts this number into a string of hexadecimal digits, treating it as unsigned.
+    /// 
+    /// ```rust
+    /// # use flex_int::FlexInt;
+    /// let i = FlexInt::from_int(0b11011100111, 32);
+    /// assert_eq!(i.to_unsigned_binary_string(), "11011100111");
+    /// 
+    /// let zero = FlexInt::new(16);
+    /// assert_eq!(zero.to_unsigned_binary_string(), "0");
+    /// ```
+    pub fn to_unsigned_binary_string(&self) -> String {
+        if self.is_zero() {
+            return "0".to_string();
+        }
+
+        self.bits_without_leading_zeroes()
+            .iter()
+            .rev()
+            .map(|b| if *b { '1' } else { '0' })
+            .collect()
+    }
+
     /// Converts this number into a string of decimal digits, treating it as signed.
     /// 
     /// ```rust
@@ -159,6 +169,20 @@ impl FlexInt {
     /// ```
     pub fn to_signed_hex_string(&self) -> String {
         self.to_signed_string(Self::to_unsigned_hex_string)
+    }
+
+    /// Converts this number into a string of hexadecimal digits, treating it as signed.
+    /// 
+    /// ```rust
+    /// # use flex_int::FlexInt;
+    /// let (i, _) = FlexInt::from_signed_binary_string("110111001", 32).unwrap();
+    /// assert_eq!(i.to_signed_binary_string(), "110111001");
+    /// 
+    /// let (i, _) = FlexInt::from_signed_binary_string("-110111001", 32).unwrap();
+    /// assert_eq!(i.to_signed_binary_string(), "-110111001");
+    /// ```
+    pub fn to_signed_binary_string(&self) -> String {
+        self.to_signed_string(Self::to_unsigned_binary_string)
     }
 
     /// A convenience method which performs a signed number-to-string conversion by using an
