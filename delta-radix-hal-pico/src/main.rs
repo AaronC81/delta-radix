@@ -76,7 +76,7 @@ fn main() -> ! {
     
     let lcd = HD44780::new_4bit(rs, en, d4, d5, d6, d7, &mut delay).unwrap();
 
-    let hal = PicoHal {
+    let mut hal = PicoHal {
         display: hal::LcdDisplay { lcd, delay: lives_forever(&mut delay) },
         keypad: hal::ButtonMatrix {
             delay: lives_forever(&mut delay),
@@ -100,7 +100,7 @@ fn main() -> ! {
     };
     
     let rt = nostd_async::Runtime::new();
-    nostd_async::Task::new(delta_radix_os::main(hal)).spawn(&rt).join();
+    nostd_async::Task::new(delta_radix_os::main(&mut hal)).spawn(&rt).join();
     
     loop {
         led.set_high().unwrap();

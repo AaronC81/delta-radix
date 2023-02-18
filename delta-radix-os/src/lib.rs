@@ -9,10 +9,10 @@ pub mod menu;
 use calc::CalculatorApplication;
 use delta_radix_hal::{Hal, Display};
 
-pub async fn main(mut hal: impl Hal) {
+pub async fn main(hal: &mut impl Hal) {
     let (disp, _, _) = hal.common_mut();
     disp.init();
 
-    let mut calc_app = CalculatorApplication::new(&mut hal);
+    let mut calc_app = CalculatorApplication::new(hal);
     calc_app.main().await;
 }

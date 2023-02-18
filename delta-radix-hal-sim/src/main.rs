@@ -8,5 +8,5 @@ async fn main() {
     let mut hal = SimHal::new();
     hal.display_mut().init();
 
-    delta_radix_os::main(hal).await;
+    delta_radix_os::main(&mut hal).await;
 }
