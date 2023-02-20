@@ -46,8 +46,8 @@ impl Key {
         }
     }
 
-    pub fn from_u32(key: u32) -> Key {
-        match key {
+    pub fn from_u32(key: u32) -> Option<Key> {
+        Some(match key {
             d if d < 0x100 => Key::Digit(d as u8),
             0x101 => Key::Shift,
             0x102 => Key::Menu,
@@ -64,8 +64,8 @@ impl Key {
             0x10D => Key::FormatSelect,
             0x10E => Key::DebugTerminate,
 
-            _ => panic!("no such key"),
-        }
+            _ => return None,
+        })
     }
 }
 

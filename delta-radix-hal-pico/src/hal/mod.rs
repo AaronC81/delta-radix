@@ -2,23 +2,25 @@
 pub mod display;
 pub mod keypad;
 pub mod time;
+pub mod async_keypad;
 
 use async_trait::async_trait;
 use alloc::boxed::Box;
 use delta_radix_hal::Display;
 
+use self::async_keypad::AsyncKeypadReceiver;
 pub use self::{display::LcdDisplay, keypad::ButtonMatrix, time::DelayTime};
 
 pub struct PicoHal<'d> {
     pub display: LcdDisplay<'d>,
-    pub keypad: ButtonMatrix<'d>,
+    pub keypad: AsyncKeypadReceiver<'d>,
     pub time: DelayTime<'d>,
 }
 
 #[async_trait(?Send)]
 impl<'d> delta_radix_hal::Hal for PicoHal<'d> {
     type D = LcdDisplay<'d>;
-    type K = ButtonMatrix<'d>;
+    type K = AsyncKeypadReceiver<'d>;
     type T = DelayTime<'d>;
 
     fn display(&self) -> &Self::D { &self.display }

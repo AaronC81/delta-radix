@@ -5,10 +5,11 @@
 
 use alloc_cortex_m::CortexMHeap;
 use cortex_m_rt::entry;
+use delta_radix_hal::Key;
 use embedded_hal::digital::v2::OutputPin;
-use hal::PicoHal;
+use hal::{PicoHal, async_keypad::{async_keypad_core1, AsyncKeypadReceiver}};
 use hd44780_driver::HD44780;
-use rp_pico::{hal::{Watchdog, Sio, clocks::init_clocks_and_plls, Clock}, pac, Pins};
+use rp_pico::{hal::{Watchdog, Sio, clocks::init_clocks_and_plls, Clock, multicore::{Stack, Multicore}}, pac, Pins};
 use embedded_time::{fixed_point::FixedPoint};
 
 extern crate alloc;
@@ -22,6 +23,8 @@ fn lives_forever<T: ?Sized>(t: &mut T) -> &'static mut T {
 #[global_allocator]
 static ALLOCATOR: CortexMHeap = CortexMHeap::empty();
 const HEAP_SIZE: usize = 240_000;
+
+static mut CORE1_STACK: Stack<4096> = Stack::new();
 
 #[entry]
 fn main() -> ! {
@@ -37,7 +40,13 @@ fn main() -> ! {
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
     let mut watchdog = Watchdog::new(pac.WATCHDOG);
-    let sio = Sio::new(pac.SIO);
+    let mut sio = Sio::new(pac.SIO);
+
+    // TODO: makes FIFO not work
+    //let mut mc = Multicore::new(&mut pac.PSM, &mut pac.PPB, &mut sio);
+    //let cores = mc.cores();
+    //let core1 = &mut cores[1];
+    //let _test = core1.spawn(async_keypad_core1, unsafe { &mut CORE1_STACK.mem });
 
     // External high-speed crystal on the pico board is 12Mhz
     let external_xtal_freq_hz = 12_000_000u32;
@@ -76,25 +85,16 @@ fn main() -> ! {
     
     let lcd = HD44780::new_4bit(rs, en, d4, d5, d6, d7, &mut delay).unwrap();
 
+    // TODO
+    sio.fifo.drain();
+    sio.fifo.write(Key::Digit(0).to_u32());
+    sio.fifo.write(Key::Digit(1).to_u32());
+    sio.fifo.write(Key::Digit(2).to_u32());
+
     let mut hal = PicoHal {
         display: hal::LcdDisplay { lcd, delay: lives_forever(&mut delay) },
-        keypad: hal::ButtonMatrix {
-            delay: lives_forever(&mut delay),
-
-            col0: pins.gpio15.into_pull_up_input(),
-            col1: pins.gpio16.into_pull_up_input(),
-            col2: pins.gpio17.into_pull_up_input(),
-            col3: pins.gpio18.into_pull_up_input(),
-            col4: pins.gpio19.into_pull_up_input(),
-
-            row0: pins.gpio20.into_push_pull_output(),
-            row1: pins.gpio21.into_push_pull_output(),
-            row2: pins.gpio22.into_push_pull_output(),
-            row3: pins.gpio26.into_push_pull_output(),
-            row4: pins.gpio27.into_push_pull_output(),
-            row5: pins.gpio28.into_push_pull_output(),
-
-            currently_pressed: None,
+        keypad: AsyncKeypadReceiver {
+            fifo: &mut sio.fifo,
         },
         time: hal::DelayTime { delay: lives_forever(&mut delay) },
     };
