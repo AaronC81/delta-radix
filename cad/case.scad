@@ -1,3 +1,19 @@
+module fillet(r) {
+    difference() {
+        square(r);
+        translate([r, r]) circle(r, $fn=50);
+    }
+}
+
+module fillet_corner(r) {
+    difference() {
+        cube(r);
+        translate([r, r, r]) sphere(r, $fn=50);
+    }
+}
+
+// --------------
+
 calc_width = 100.75 + 0.2;
 calc_height = 159.12 + 0.75;
 
@@ -15,8 +31,8 @@ calc_mounting_hole_locations = [
     [calc_width - calc_mounting_hole_offset * 2, calc_height - calc_mounting_hole_offset * 2],
 ];
 
-calc_pcb_thickness = 1.6;
-calc_underneath_thickness = 2.5;
+calc_pcb_thickness = 1.65;
+calc_underneath_thickness = 2.75;
 
 module calc_cutout() {
     translate([0, 0, calc_mounting_hole_depth - calc_underneath_thickness]) {
@@ -102,6 +118,9 @@ bottom_case_true_depth = calc_cutout_total_thickness + bottom_case_depth;
 case_width = calc_width + bottom_case_calc_border * 2;
 case_true_height = case_height + bottom_case_calc_border * 2;
 
+bottom_case_logo_indent = 2.5;
+bottom_case_fillet_radius = 10;
+
 case_mounting_hole_locations = [
     [0, 0],
     [case_width - case_mounting_hole_offset * 2, 0],
@@ -109,6 +128,21 @@ case_mounting_hole_locations = [
     [case_width - case_mounting_hole_offset * 2, case_true_height - case_mounting_hole_offset * 2],
 ];
 
+module logo() {
+    translate([-60 / 2, 3 - 50 / 2])
+    minkowski() {
+        polygon([
+            [0, 0],
+            [30, 50],
+            [60, 0],
+            [0, 0.1],
+            [60, 0.1],
+            [30, 50.1],
+            [0, 0.1]
+        ]);
+        circle(4, $fn=30);
+    }
+}
 
 module bottom_case() {
     difference() {
@@ -123,12 +157,6 @@ module bottom_case() {
         translate([bottom_case_calc_border, bottom_case_calc_border, bottom_case_depth])
         calc_cutout();
         
-        // TODO: Temporary, save print time
-        pad = 10;
-        linear_extrude(100)
-        translate([bottom_case_calc_border + pad, bottom_case_calc_border + pad])
-        square([calc_width - pad * 2, calc_height - pad * 2]);
-        
         for (loc = case_mounting_hole_locations) {
             translate(loc + [case_mounting_hole_offset, case_mounting_hole_offset])
             linear_extrude(1000) // arbitrary
@@ -142,6 +170,44 @@ module bottom_case() {
         translate([bottom_case_calc_border + calc_width, bottom_case_calc_border + calc_usb_port_from_bottom - calc_usb_port_width / 2])
         linear_extrude(100) // arbitrary
         square([bottom_case_calc_border, calc_usb_port_width]);
+        
+        translate([case_width / 2, case_true_height / 2])
+        linear_extrude(bottom_case_logo_indent)
+        logo();
+        
+        // Edge fillets
+        translate([0, case_true_height, 0])
+        rotate([90, 0, 0])
+        linear_extrude(case_true_height)
+        fillet(bottom_case_fillet_radius);
+        
+        translate([case_width, case_true_height, 0])
+        rotate([90, 270, 0])
+        linear_extrude(case_true_height)
+        fillet(bottom_case_fillet_radius);
+       
+        translate([case_width, 0, 0])
+        rotate([0, -90, 0])
+        linear_extrude(case_width)
+        fillet(bottom_case_fillet_radius);
+        
+        translate([case_width, case_true_height, 0])
+        rotate([90, 0, 0])
+        rotate([0, -90, 0])
+        linear_extrude(case_width)
+        fillet(bottom_case_fillet_radius);
+        
+        // Fillet corners
+        fillet_corner(bottom_case_fillet_radius);
+        
+        translate([case_width, 0]) rotate([0, 0, 90])
+        fillet_corner(bottom_case_fillet_radius);
+        
+        translate([case_width, case_true_height]) rotate([0, 0, 180])
+        fillet_corner(bottom_case_fillet_radius);
+        
+        translate([0, case_true_height]) rotate([0, 0, 270])
+        fillet_corner(bottom_case_fillet_radius);
     }
     
 }
@@ -225,5 +291,6 @@ module top_case() {
     display_frame();
 }
 
-//bottom_case();
-translate([0, 0, bottom_case_true_depth]) top_case();
+bottom_case();
+//translate([0, 0, bottom_case_true_depth]) top_case();
+
