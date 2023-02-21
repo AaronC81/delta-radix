@@ -46,7 +46,7 @@ impl<'d> ButtonMatrix<'d> {
     const COLS: usize = 5;
     const ROWS: usize = 6;
 
-    const DEBOUNCE_MS: u32 = 5;
+    const DEBOUNCE_MS: u32 = 1;
 
     fn rows_and_cols(&mut self) ->
         ([&mut dyn OutputPin<Error = Infallible>; ButtonMatrix::<'d>::ROWS], [&mut dyn InputPin<Error = Infallible>; ButtonMatrix::<'d>::COLS])
@@ -98,7 +98,7 @@ impl<'d> ButtonMatrix<'d> {
                     }
                 }
     
-                self.delay.delay_ms(5);
+                self.delay.delay_ms(Self::DEBOUNCE_MS);
             }
         }
 
@@ -116,7 +116,7 @@ impl<'d> ButtonMatrix<'d> {
                 }
             }
 
-            self.delay.delay_ms(5);
+            self.delay.delay_ms(Self::DEBOUNCE_MS);
         }
     }
 
