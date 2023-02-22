@@ -12,6 +12,42 @@ module fillet_corner(r) {
     }
 }
 
+module case_fillets(r) {
+    // Edge fillets
+    translate([0, case_true_height, 0])
+    rotate([90, 0, 0])
+    linear_extrude(case_true_height)
+    fillet(r);
+    
+    translate([case_width, case_true_height, 0])
+    rotate([90, 270, 0])
+    linear_extrude(case_true_height)
+    fillet(r);
+   
+    translate([case_width, 0, 0])
+    rotate([0, -90, 0])
+    linear_extrude(case_width)
+    fillet(r);
+    
+    translate([case_width, case_true_height, 0])
+    rotate([90, 0, 0])
+    rotate([0, -90, 0])
+    linear_extrude(case_width)
+    fillet(r);
+    
+    // Fillet corners
+    fillet_corner(r);
+    
+    translate([case_width, 0]) rotate([0, 0, 90])
+    fillet_corner(r);
+    
+    translate([case_width, case_true_height]) rotate([0, 0, 180])
+    fillet_corner(r);
+    
+    translate([0, case_true_height]) rotate([0, 0, 270])
+    fillet_corner(r);
+}
+
 // --------------
 
 calc_width = 100.75 + 0.2;
@@ -175,39 +211,7 @@ module bottom_case() {
         linear_extrude(bottom_case_logo_indent)
         logo();
         
-        // Edge fillets
-        translate([0, case_true_height, 0])
-        rotate([90, 0, 0])
-        linear_extrude(case_true_height)
-        fillet(bottom_case_fillet_radius);
-        
-        translate([case_width, case_true_height, 0])
-        rotate([90, 270, 0])
-        linear_extrude(case_true_height)
-        fillet(bottom_case_fillet_radius);
-       
-        translate([case_width, 0, 0])
-        rotate([0, -90, 0])
-        linear_extrude(case_width)
-        fillet(bottom_case_fillet_radius);
-        
-        translate([case_width, case_true_height, 0])
-        rotate([90, 0, 0])
-        rotate([0, -90, 0])
-        linear_extrude(case_width)
-        fillet(bottom_case_fillet_radius);
-        
-        // Fillet corners
-        fillet_corner(bottom_case_fillet_radius);
-        
-        translate([case_width, 0]) rotate([0, 0, 90])
-        fillet_corner(bottom_case_fillet_radius);
-        
-        translate([case_width, case_true_height]) rotate([0, 0, 180])
-        fillet_corner(bottom_case_fillet_radius);
-        
-        translate([0, case_true_height]) rotate([0, 0, 270])
-        fillet_corner(bottom_case_fillet_radius);
+        case_fillets(bottom_case_fillet_radius);
     }
     
 }
@@ -252,6 +256,11 @@ module top_case() {
         translate([bottom_case_calc_border + calc_width, bottom_case_calc_border + calc_usb_port_from_bottom - calc_usb_port_width / 2])
         linear_extrude(8)
         square([bottom_case_calc_border, calc_usb_port_width]);
+        
+        
+        translate([0, case_true_height, top_case_rim_depth])
+        rotate([180, 0, 0])
+        case_fillets(bottom_case_calc_border);
     }
     
     // Rim padding around buttons
@@ -291,6 +300,6 @@ module top_case() {
     display_frame();
 }
 
-bottom_case();
-//translate([0, 0, bottom_case_true_depth]) top_case();
+//bottom_case();
+translate([0, 0, bottom_case_true_depth]) top_case();
 
