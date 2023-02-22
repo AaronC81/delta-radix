@@ -230,6 +230,10 @@ top_case_pot_x = 12.32; // from left
 top_case_pot_y = 28.85; // from top
 top_case_pot_diameter = 8;
 
+top_case_reset_button_distance_x = 18;
+top_case_reset_button_width = 4.3;
+top_case_reset_button_height = 3.5;
+
 module top_case() {
     difference() {
         linear_extrude(top_case_rim_depth)
@@ -257,7 +261,6 @@ module top_case() {
         linear_extrude(8)
         square([bottom_case_calc_border, calc_usb_port_width]);
         
-        
         translate([0, case_true_height, top_case_rim_depth])
         rotate([180, 0, 0])
         case_fillets(bottom_case_calc_border);
@@ -274,7 +277,7 @@ module top_case() {
         
         square([calc_width, top_case_button_padding_bottom]);
         
-        // This one needs a cutout for the contrast pot
+        // This one needs a cutout for the contrast pot and reset button
         difference() {
             translate([0, calc_height - top_case_button_padding_top])
             square([calc_width, top_case_button_padding_top]);
