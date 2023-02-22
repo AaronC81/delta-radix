@@ -22,7 +22,7 @@ fn lives_forever<T: ?Sized>(t: &mut T) -> &'static mut T {
 
 #[global_allocator]
 static ALLOCATOR: CortexMHeap = CortexMHeap::empty();
-const HEAP_SIZE: usize = 240_000;
+const HEAP_SIZE: usize = 230_000;
 
 static mut CORE1_STACK: Stack<4096> = Stack::new();
 
@@ -42,11 +42,10 @@ fn main() -> ! {
     let mut watchdog = Watchdog::new(pac.WATCHDOG);
     let mut sio = Sio::new(pac.SIO);
 
-    // TODO: makes FIFO not work
-    //let mut mc = Multicore::new(&mut pac.PSM, &mut pac.PPB, &mut sio);
-    //let cores = mc.cores();
-    //let core1 = &mut cores[1];
-    //let _test = core1.spawn(async_keypad_core1, unsafe { &mut CORE1_STACK.mem });
+    let mut mc = Multicore::new(&mut pac.PSM, &mut pac.PPB, &mut sio);
+    let cores = mc.cores();
+    let core1 = &mut cores[1];
+    let _test = core1.spawn(async_keypad_core1, unsafe { &mut CORE1_STACK.mem });
 
     // External high-speed crystal on the pico board is 12Mhz
     let external_xtal_freq_hz = 12_000_000u32;
@@ -84,12 +83,6 @@ fn main() -> ! {
     let d7 = pins.gpio6.into_push_pull_output();
     
     let lcd = HD44780::new_4bit(rs, en, d4, d5, d6, d7, &mut delay).unwrap();
-
-    // TODO
-    sio.fifo.drain();
-    sio.fifo.write(Key::Digit(0).to_u32());
-    sio.fifo.write(Key::Digit(1).to_u32());
-    sio.fifo.write(Key::Digit(2).to_u32());
 
     let mut hal = PicoHal {
         display: hal::LcdDisplay { lcd, delay: lives_forever(&mut delay) },
