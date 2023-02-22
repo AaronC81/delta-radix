@@ -111,6 +111,9 @@ display_min_height = 7;
 display_pin_cutout_width = 45;
 display_pin_cutout_height = 5.5;
 
+display_centre_cutout_width = display_board_width - 14;
+display_centre_cutout_height = 48;
+
 module display_frame() {
     difference() {
         rotate([display_tilt_angle, 0])
@@ -125,6 +128,9 @@ module display_frame() {
                     translate([display_mounting_hole_sep_x * mul[0] / 2, display_mounting_hole_sep_y * mul[1] / 2])
                     circle(d = case_mounting_hole_diameter, $fn = 20);
                 }
+                
+                translate([-display_centre_cutout_width/2, -display_centre_cutout_height/2])
+                square([display_centre_cutout_width, display_centre_cutout_height]);
             }
             
             // Pins
@@ -267,35 +273,46 @@ module top_case() {
     }
     
     // Rim padding around buttons
-    translate([0, 0, top_case_rim_overhang_spacing])
-    linear_extrude(top_case_rim_depth - top_case_rim_overhang_spacing)
-    translate([bottom_case_calc_border, bottom_case_calc_border]) {
-        square([top_case_button_padding_horizontal, calc_height]);
-        
-        translate([calc_width - top_case_button_padding_horizontal, 0])
-        square([top_case_button_padding_horizontal, calc_height]);
-        
-        square([calc_width, top_case_button_padding_bottom]);
-        
-        // This one needs a cutout for the contrast pot and reset button
-        difference() {
-            translate([0, calc_height - top_case_button_padding_top])
-            square([calc_width, top_case_button_padding_top]);
+    difference() {
+        translate([0, 0, top_case_rim_overhang_spacing])
+        linear_extrude(top_case_rim_depth - top_case_rim_overhang_spacing)
+        translate([bottom_case_calc_border, bottom_case_calc_border]) {
+            square([top_case_button_padding_horizontal, calc_height]);
             
-            translate([top_case_pot_x, calc_height - top_case_pot_y])
-            circle(d = top_case_pot_diameter, $fn = 20);
+            translate([calc_width - top_case_button_padding_horizontal, 0])
+            square([top_case_button_padding_horizontal, calc_height]);
+            
+            square([calc_width, top_case_button_padding_bottom]);
+            
+            // This one needs a cutout for the contrast pot and reset button
+            difference() {
+                translate([0, calc_height - top_case_button_padding_top])
+                square([calc_width, top_case_button_padding_top]);
+                
+                translate([top_case_pot_x, calc_height - top_case_pot_y])
+                circle(d = top_case_pot_diameter, $fn = 20);
+            }
+            
+            // Not actually around buttons - fills in area above display cables
+            difference() {
+                translate([0, calc_height])
+                square([calc_width, case_height - calc_height]);
+                
+                // Continue cable cutout from display_frame
+                // Unfortunately a bit of guesswork with these multipliers
+                translate([(case_width - display_board_width - 1.5) / 2, case_true_height - bottom_case_calc_border * 2.6])
+                square([display_pin_cutout_width, display_pin_cutout_height]);
+                
+                translate([(case_width - display_board_width - 1.5) / 2, case_true_height - bottom_case_calc_border * 8])
+                square([display_centre_cutout_width, display_centre_cutout_height]);
+            }
         }
         
-        // Not actually around buttons - fills in area above display cables
-        difference() {
-            translate([0, calc_height])
-            square([calc_width, case_height - calc_height]);
-            
-            // Continue cable cutout from display_frame
-            // Unfortunately a bit of guesswork with that multiplier
-            translate([(case_width - display_board_width) / 2, case_true_height - bottom_case_calc_border * 2.6])
-            square([display_pin_cutout_width, display_pin_cutout_height]);
-        }
+        // Cut out reset button hole
+        translate([case_width - top_case_reset_button_distance_x - top_case_reset_button_width, calc_usb_port_from_bottom + 10])
+        rotate([15, 0, 0])
+        linear_extrude(1000)
+        square([top_case_reset_button_width, top_case_reset_button_height]);
     }
     
     // Display
