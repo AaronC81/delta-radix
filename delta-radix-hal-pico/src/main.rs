@@ -16,6 +16,7 @@ extern crate alloc;
 
 mod hal;
 mod panic;
+mod executor;
 
 fn lives_forever<T: ?Sized>(t: &mut T) -> &'static mut T {
     unsafe { (t as *mut T).as_mut().unwrap() }
@@ -102,8 +103,7 @@ fn main() -> ! {
     };
     init_panic_peripherals(lives_forever(&mut hal));
     
-    let rt = nostd_async::Runtime::new();
-    nostd_async::Task::new(delta_radix_os::main(&mut hal)).spawn(&rt).join();
+    executor::execute(delta_radix_os::main(&mut hal));
     
     loop {
         led.set_high().unwrap();
