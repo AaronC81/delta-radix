@@ -9,12 +9,15 @@ use delta_radix_hal::Key;
 use embedded_hal::digital::v2::OutputPin;
 use hal::{PicoHal, async_keypad::{async_keypad_core1, AsyncKeypadReceiver}};
 use hd44780_driver::HD44780;
+use panic::init_panic_peripherals;
 use rp_pico::{hal::{Watchdog, Sio, clocks::init_clocks_and_plls, Clock, multicore::{Stack, Multicore}}, pac, Pins};
 use embedded_time::{fixed_point::FixedPoint};
 
 extern crate alloc;
 
 mod hal;
+mod panic;
+mod executor;
 
 fn lives_forever<T: ?Sized>(t: &mut T) -> &'static mut T {
     unsafe { (t as *mut T).as_mut().unwrap() }
@@ -91,9 +94,9 @@ fn main() -> ! {
         },
         time: hal::DelayTime { delay: lives_forever(&mut delay) },
     };
+    init_panic_peripherals(lives_forever(&mut hal));
     
-    let rt = nostd_async::Runtime::new();
-    nostd_async::Task::new(delta_radix_os::main(&mut hal)).spawn(&rt).join();
+    executor::execute(delta_radix_os::main(&mut hal));
     
     loop {
         led.set_high().unwrap();
@@ -101,15 +104,4 @@ fn main() -> ! {
         led.set_low().unwrap();
         delay.delay_ms(1000);
     }
-}
-
-#[cfg(not(any(unix, windows)))]
-use core::panic::PanicInfo;
-
-#[cfg(not(any(unix, windows)))]
-#[panic_handler]
-fn panic(_: &PanicInfo) -> ! {
-    use hal::enter_bootloader;
-    unsafe { enter_bootloader(); }
-    loop {}
 }

@@ -27,4 +27,3 @@ defmt-rtt = "0.3.0"
 # Drivers
 hd44780-driver = { git = "https://github.com/AaronC81/hd44780-driver" }
 async-trait = "0.1.63"
-nostd_async = "0.6.0"
