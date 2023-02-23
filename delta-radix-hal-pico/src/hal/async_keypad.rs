@@ -1,6 +1,4 @@
-use async_trait::async_trait;
 use delta_radix_hal::{Key, Keypad};
-use alloc::boxed::Box;
 use rp_pico::{pac, hal::{Sio, multicore::Stack, sio::SioFifo}, Pins};
 
 use crate::{lives_forever, executor};

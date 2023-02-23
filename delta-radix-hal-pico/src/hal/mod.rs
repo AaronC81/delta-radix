@@ -4,8 +4,6 @@ pub mod keypad;
 pub mod time;
 pub mod async_keypad;
 
-use async_trait::async_trait;
-use alloc::boxed::Box;
 use delta_radix_hal::Display;
 
 use self::async_keypad::AsyncKeypadReceiver;

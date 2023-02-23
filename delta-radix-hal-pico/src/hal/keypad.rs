@@ -1,7 +1,5 @@
 use core::convert::Infallible;
 
-use alloc::boxed::Box;
-use async_trait::async_trait;
 use cortex_m::delay::Delay;
 use delta_radix_hal::Key;
 use embedded_hal::digital::v2::{InputPin, OutputPin};

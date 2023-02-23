@@ -1,6 +1,5 @@
 use std::{io::{stdout, Write, Stdout, Stdin, stdin}, cell::RefCell, time::Duration};
 
-use async_trait::async_trait;
 use delta_radix_hal::{Display, Keypad, Key, Hal, Time};
 use termion::{raw::{IntoRawMode, RawTerminal}, input::{TermRead, Keys}};
 use termion::event::Key as TermKey;
@@ -81,14 +80,12 @@ impl SimTime {
     fn new() -> Self { Self }
 }
 
-#[async_trait(?Send)]
 impl Time for SimTime {
     async fn sleep(&mut self, dur: Duration) {
         tokio::time::sleep(dur).await
     }
 }
 
-#[async_trait(?Send)]
 impl Keypad for SimKeypad {
     async fn wait_key(&mut self) -> Key {
         loop {
@@ -135,7 +132,6 @@ impl SimHal {
     }
 }
 
-#[async_trait(?Send)]
 impl Hal for SimHal {
     type D = SimDisplay;
     type K = SimKeypad;

@@ -2,8 +2,6 @@
 #![feature(async_fn_in_trait)]
 
 extern crate alloc;
-use async_trait::async_trait;
-use alloc::boxed::Box;
 
 mod display;
 pub use display::*;

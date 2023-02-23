@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-trait = "0.1.61"
 delta-radix-hal = { path = "../delta-radix-hal" }
 delta-radix-os = { path = "../delta-radix-os" }
 termion = "2.0.1"

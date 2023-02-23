@@ -1,6 +1,4 @@
 use core::time::Duration;
-use alloc::boxed::Box;
-use async_trait::async_trait;
 use cortex_m::delay::Delay;
 
 pub struct DelayTime<'d> {

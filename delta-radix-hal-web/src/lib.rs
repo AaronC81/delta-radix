@@ -1,3 +1,5 @@
+#![feature(async_fn_in_trait)]
+
 use wasm_bindgen::prelude::wasm_bindgen;
 
 mod hal;

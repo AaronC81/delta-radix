@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use async_trait::async_trait;
 use delta_radix_hal::{Display, Keypad, Key, Time, Hal};
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
@@ -29,7 +28,6 @@ extern "C" {
     async fn radix_keypad_wait_key() -> JsValue;
 }
 pub struct WebKeypad;
-#[async_trait(?Send)]
 impl Keypad for WebKeypad {
     async fn wait_key(&mut self) -> Key {
         let value = radix_keypad_wait_key().await;
@@ -65,7 +63,6 @@ extern "C" {
     async fn radix_time_sleep(ms: usize);
 }
 pub struct WebTime;
-#[async_trait(?Send)]
 impl Time for WebTime {
     async fn sleep(&mut self, dur: Duration) {
         radix_time_sleep(dur.as_millis() as usize).await;
@@ -88,7 +85,6 @@ impl WebHal {
     }
 }
 
-#[async_trait(?Send)]
 impl Hal for WebHal {
     type D = WebDisplay;
     type K = WebKeypad;

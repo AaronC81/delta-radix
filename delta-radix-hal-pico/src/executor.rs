@@ -1,5 +1,4 @@
 use core::{future::Future, task::{Waker, Context, RawWakerVTable, RawWaker, Poll}, pin::Pin};
-use alloc::boxed::Box;
 
 const RAW_WAKER_VTABLE: RawWakerVTable = RawWakerVTable::new(raw_waker_clone, raw_waker_wake, raw_waker_wake, raw_waker_drop);
 const RAW_WAKER_DATA: () = ();

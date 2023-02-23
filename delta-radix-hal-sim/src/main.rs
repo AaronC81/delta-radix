@@ -1,3 +1,5 @@
+#![feature(async_fn_in_trait)]
+
 use delta_radix_hal::{Hal, Display};
 use hal::SimHal;
 
