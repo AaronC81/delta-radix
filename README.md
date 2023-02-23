@@ -57,7 +57,7 @@ and use the `+`/`-` keys to choose signed or unsigned respectively.
   - Either add a faster overall parsing mode just for constant overflow warnings, or versions of 
     number parsing which aren't suitable for evaluation but are fine for warnings (e.g. just use
     built-in Rust parsing, don't calculate overflow)
-- [ ] "Clear" key (shift + del?)
+- [X] "Clear" key (shift + del?)
 - [ ] Variables
 - [ ] Parentheses
 - [ ] Scrolling expression input

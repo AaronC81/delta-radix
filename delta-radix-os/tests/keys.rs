@@ -17,7 +17,7 @@ impl KeySequence for Key {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub struct Shifted(Key);
+pub struct Shifted(pub Key);
 impl KeySequence for Shifted {
     fn keys(&self) -> Vec<Key> {
         vec![

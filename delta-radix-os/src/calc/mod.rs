@@ -264,6 +264,11 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                             };
                             self.draw_full();
                         }
+                        Key::Delete => {
+                            self.input_shifted = false;
+                            self.clear_all();
+                            self.draw_full();
+                        }
 
                         _ => (),
                     }
@@ -410,7 +415,14 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
     fn clear_evaluation(&mut self) {
         self.eval_result = None;
+        self.constant_overflows = false;
         self.draw_result();
         self.draw_header();
+    }
+
+    fn clear_all(&mut self) {
+        self.clear_evaluation();
+        self.glyphs.clear();
+        self.cursor_pos = 0;
     }
 }

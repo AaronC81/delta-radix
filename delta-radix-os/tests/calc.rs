@@ -9,7 +9,7 @@ use hal::TestHal;
 use keys::{SetFormat, Number};
 use panic_message::panic_message;
 
-use crate::hal::run_os;
+use crate::{hal::run_os, keys::Shifted};
 
 mod hal;
 
@@ -107,5 +107,18 @@ fn test_binary_result() {
     ));
     assert_eq!(hal.expression(), 0b11011101.to_string());
     assert_eq!(hal.result(), "b11011101");
+    assert!(!hal.overflow());
+}
+
+#[test]
+fn test_clear_all() {
+    let hal = run_os(&keys!(
+        Number(123),
+        Shifted(Key::Delete),
+        Number(456),
+        Key::Exe,
+    ));
+    assert_eq!(hal.expression(), "456");
+    assert_eq!(hal.result(), "456");
     assert!(!hal.overflow());
 }
