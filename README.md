@@ -48,3 +48,12 @@ the Format Select key twice to return to decimal.
 
 To change the arithmetic data type, use Shift (`^`) > Format Select (`->`). Enter a number of bits,
 and use the `+`/`-` keys to choose signed or unsigned respectively.
+
+## Things left to do
+
+- [ ] "Clear" key (shift + del?)
+- [ ] Variables
+- [ ] Parentheses
+- [ ] Scrolling expression input
+- [ ] Show result as if unsigned
+- [ ] Sleep after inactivity
