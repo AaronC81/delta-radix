@@ -1,3 +1,5 @@
+#![feature(async_fn_in_trait)]
+
 use std::{panic::catch_unwind, cell::RefCell, rc::Rc};
 
 use delta_radix_hal::{Key, Hal};

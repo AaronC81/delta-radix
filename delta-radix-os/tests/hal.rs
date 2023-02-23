@@ -1,6 +1,7 @@
+#![feature(async_fn_in_trait)]
+
 use std::{collections::VecDeque, time::Duration, panic::catch_unwind};
 
-use async_trait::async_trait;
 use delta_radix_hal::{Key, Display, Keypad, Time, Hal};
 use delta_radix_os::main;
 use futures::executor::block_on;
