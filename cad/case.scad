@@ -320,6 +320,23 @@ module top_case() {
     display_frame();
 }
 
+module bootsel_button() {
+    difference() {
+        rotate([-15, 0, 0])
+        linear_extrude(30)
+        square([top_case_reset_button_width - 0.15, top_case_reset_button_height - 0.15]);
+        
+        translate([0, 0, -10])
+        linear_extrude(10)
+        square([50, 50]);
+        
+        translate([0, 0, 19])
+        linear_extrude(100)
+        square([50, 50]);
+    }
+}
+
 //bottom_case();
-translate([0, 0, bottom_case_true_depth]) top_case();
+//translate([0, 0, bottom_case_true_depth]) top_case();
+bootsel_button();
 
