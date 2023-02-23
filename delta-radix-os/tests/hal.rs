@@ -53,7 +53,6 @@ impl Display for TestDisplay {
 pub struct TestKeypad {
     key_queue: VecDeque<Key>,
 }
-#[async_trait(?Send)]
 impl Keypad for TestKeypad {
     async fn wait_key(&mut self) -> Key {
         self.key_queue.pop_front().expect("no more keys")
@@ -61,7 +60,6 @@ impl Keypad for TestKeypad {
 }
 
 pub struct TestTime;
-#[async_trait(?Send)]
 impl Time for TestTime {
     async fn sleep(&mut self, _: Duration) {}
 }
@@ -106,7 +104,6 @@ impl TestHal {
     }
 }
 
-#[async_trait(?Send)]
 impl Hal for TestHal {
     type D = TestDisplay;
     type K = TestKeypad;

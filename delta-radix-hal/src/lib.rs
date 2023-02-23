@@ -1,4 +1,6 @@
 #![no_std]
+#![feature(async_fn_in_trait)]
+
 extern crate alloc;
 use async_trait::async_trait;
 use alloc::boxed::Box;
@@ -12,7 +14,6 @@ pub use keypad::*;
 mod time;
 pub use time::*;
 
-#[async_trait(?Send)]
 pub trait Hal {
     type D: Display;
     type K: Keypad;

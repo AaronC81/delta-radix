@@ -2,6 +2,7 @@
 #![no_main]
 #![feature(alloc_error_handler)]
 #![feature(generic_const_exprs)]
+#![feature(async_fn_in_trait)]
 
 use alloc_cortex_m::CortexMHeap;
 use cortex_m_rt::entry;

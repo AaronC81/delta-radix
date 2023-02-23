@@ -27,11 +27,13 @@ fn panic(info: &PanicInfo) -> ! {
     use crate::hal::enter_bootloader;
 
     let mut periphs = unsafe { PANIC_HAL.as_mut() }.unwrap();
-    periphs.display.clear();
+    // periphs.display.clear();
+    periphs.display.set_position(0, 0);
     
     let message = format!("{}", info);
     let chars = message.chars().collect::<Vec<_>>();
-    for (i, l) in chars.chunks(20).enumerate() {
+    for (i, l) in chars.chunks(20).skip(5).enumerate() {
+        if i >= 4 { break }
         periphs.display.set_position(0, i as u8);
         let line = l.iter().copied().collect::<String>();
         periphs.display.print_string(&line);

@@ -11,7 +11,6 @@ pub struct AsyncKeypadReceiver<'s> {
     pub fifo: &'s mut SioFifo,
 }
 
-#[async_trait(?Send)]
 impl<'s> delta_radix_hal::Keypad for AsyncKeypadReceiver<'s> {
     async fn wait_key(&mut self) -> Key {
         loop {
@@ -65,8 +64,6 @@ pub fn async_keypad_core1() -> ! {
     // For the rest of time, loop looking for buttons
     loop {
         let key = executor::execute(matrix.wait_key());
-        // sio.fifo.write(key.to_u32());
-        sio.fifo.write(Key::Digit(0).to_u32());
-        delay.delay_ms(1);
+        sio.fifo.write(key.to_u32());
     }
 }

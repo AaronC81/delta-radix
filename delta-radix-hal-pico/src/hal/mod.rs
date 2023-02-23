@@ -17,7 +17,6 @@ pub struct PicoHal<'d> {
     pub time: DelayTime<'d>,
 }
 
-#[async_trait(?Send)]
 impl<'d> delta_radix_hal::Hal for PicoHal<'d> {
     type D = LcdDisplay<'d>;
     type K = AsyncKeypadReceiver<'d>;

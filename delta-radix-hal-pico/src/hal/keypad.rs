@@ -164,7 +164,6 @@ impl<'d> ButtonMatrix<'d> {
     }
 }
 
-#[async_trait(?Send)]
 impl<'d> delta_radix_hal::Keypad for ButtonMatrix<'d> {
     async fn wait_key(&mut self) -> Key {
         loop {
