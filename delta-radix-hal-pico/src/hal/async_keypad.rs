@@ -3,7 +3,7 @@ use delta_radix_hal::{Key, Keypad};
 use alloc::boxed::Box;
 use rp_pico::{pac, hal::{Sio, multicore::Stack, sio::SioFifo}, Pins};
 
-use crate::lives_forever;
+use crate::{lives_forever, executor};
 
 use super::ButtonMatrix;
 
@@ -35,6 +35,13 @@ pub fn async_keypad_core1() -> ! {
         &mut pac.RESETS,
     );
 
+    // Wait until the magic word over FIFO
+    loop {
+        if sio.fifo.read_blocking() == 0xCAFECAFE {
+            break;
+        }
+    }
+
     // Set up button matrix
     let mut matrix = ButtonMatrix {
         delay: lives_forever(&mut delay),
@@ -54,12 +61,12 @@ pub fn async_keypad_core1() -> ! {
 
         currently_pressed: None,
     };
-
-    let rt = nostd_async::Runtime::new();
+    
     // For the rest of time, loop looking for buttons
     loop {
-        let key = nostd_async::Task::new(matrix.wait_key()).spawn(&rt).join();
-        sio.fifo.write(key.to_u32());
+        let key = executor::execute(matrix.wait_key());
+        // sio.fifo.write(key.to_u32());
+        sio.fifo.write(Key::Digit(0).to_u32());
         delay.delay_ms(1);
     }
 }

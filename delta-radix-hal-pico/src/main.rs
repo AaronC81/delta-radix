@@ -90,12 +90,15 @@ fn main() -> ! {
     let mut hal = PicoHal {
         display: hal::LcdDisplay { lcd, delay: lives_forever(&mut delay) },
         keypad: AsyncKeypadReceiver {
-            fifo: &mut sio.fifo,
+            fifo: lives_forever(&mut sio.fifo),
         },
         time: hal::DelayTime { delay: lives_forever(&mut delay) },
     };
     init_panic_peripherals(lives_forever(&mut hal));
-    
+
+    // Tell the other core to get going
+    sio.fifo.write(0xCAFECAFE);    
+
     executor::execute(delta_radix_os::main(&mut hal));
     
     loop {
