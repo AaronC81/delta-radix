@@ -1,9 +1,10 @@
 use alloc::{vec::Vec, vec, string::{ToString, String}, format};
 use delta_radix_hal::{Hal, Display, Keypad, Key, DisplaySpecialCharacter, Glyph};
+use flex_int::FlexInt;
 
 use crate::menu;
 
-use self::{eval::{EvaluationResult, Configuration, DataType, evaluate}, parse::{Parser, Node, ParserError}};
+use self::{eval::{EvaluationResult, Configuration, DataType, evaluate}, parse::{Parser, Node, ParserError, NumberParser}};
 
 mod eval;
 mod parse;
@@ -148,7 +149,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
     fn draw_expression(&mut self) {
         // Try to parse and get warning spans
-        let (parser, _) = self.parse();
+        let (parser, _) = self.parse::<FlexInt>();
         let warning_indices = parser.constant_overflow_spans.iter()
             .flat_map(|s| s.indices().collect::<Vec<_>>())
             .collect::<Vec<_>>();
@@ -402,14 +403,14 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         self.draw_full();
     }
 
-    fn parse(&self) -> (Parser, Result<Node, ParserError>) {
+    fn parse<N: NumberParser>(&self) -> (Parser<N>, Result<Node, ParserError>) {
         let mut parser = Parser::new(&self.glyphs, self.eval_config);
         let result = parser.parse();
         (parser, result)
     }
 
     fn evaluate(&mut self) {
-        let (_, node) = self.parse();
+        let (_, node) = self.parse::<FlexInt>();
         self.eval_result = Some(node.map(|node| evaluate(&node, &self.eval_config)))
     }
 

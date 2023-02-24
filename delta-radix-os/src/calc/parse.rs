@@ -1,9 +1,9 @@
-use core::ops::Range;
+use core::{ops::Range, marker::PhantomData};
 
 use alloc::{vec, vec::Vec, string::{String, ToString}, boxed::Box, format};
 use delta_radix_hal::Glyph;
 
-use super::{eval, Base};
+use super::{eval::{self, DataType}, Base};
 use flex_int::FlexInt;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -75,15 +75,17 @@ impl ParserErrorKind {
     }
 }
 
-pub struct Parser<'g> {
+pub struct Parser<'g, N: NumberParser> {
     pub glyphs: &'g [Glyph],
     pub ptr: usize,
     pub eval_config: eval::Configuration,
     pub constant_overflow_spans: Vec<GlyphSpan>,
     pub next_number_negated: bool,
+
+    _phantom: PhantomData<N>,
 }
 
-impl<'g> Parser<'g> {
+impl<'g, N: NumberParser> Parser<'g, N> {
     pub fn new(glyphs: &'g [Glyph], eval_config: eval::Configuration) -> Self {
         Parser {
             glyphs,
@@ -91,6 +93,8 @@ impl<'g> Parser<'g> {
             eval_config,
             constant_overflow_spans: vec![],
             next_number_negated: false,
+
+            _phantom: PhantomData,
         }
     }
 
@@ -217,27 +221,8 @@ impl<'g> Parser<'g> {
             // Parse number
             let parse_signed = self.eval_config.data_type.signed || force_parse_signed;
             let (num, mut overflow) =
-                match base {
-                    Some(Base::Decimal) | None => 
-                        if parse_signed {
-                            FlexInt::from_signed_decimal_string(&str, self.eval_config.data_type.bits)
-                        } else {
-                            FlexInt::from_unsigned_decimal_string(&str, self.eval_config.data_type.bits)
-                        }
-                    Some(Base::Hexadecimal) =>
-                        if parse_signed {
-                            FlexInt::from_signed_hex_string(&str, self.eval_config.data_type.bits)
-                        } else {
-                            FlexInt::from_unsigned_hex_string(&str, self.eval_config.data_type.bits)
-                        }
-                    Some(Base::Binary) => 
-                        if parse_signed {
-                            FlexInt::from_signed_binary_string(&str, self.eval_config.data_type.bits)
-                        } else {
-                            FlexInt::from_unsigned_binary_string(&str, self.eval_config.data_type.bits)
-                        }
-                }
-                    .ok_or(self.create_error(ParserErrorKind::InvalidNumber))?;
+                N::parse(&str, base.unwrap_or(Base::Decimal), parse_signed, self.eval_config.data_type.bits)
+                .ok_or(self.create_error(ParserErrorKind::InvalidNumber))?;
 
             // Force-parsing a negative number will always result in overflow (because the data type
             // can't represent the parsed number)
@@ -262,5 +247,34 @@ impl<'g> Parser<'g> {
 
     fn create_error(&self, kind: ParserErrorKind) -> ParserError {
         ParserError { ptr: self.ptr, kind }
+    }
+}
+
+pub trait NumberParser {
+    fn parse(chars: &str, base: Base, signed: bool, bits: usize) -> Option<(FlexInt, bool)>;
+}
+
+impl NumberParser for FlexInt {
+    fn parse(chars: &str, base: Base, signed: bool, bits: usize) -> Option<(FlexInt, bool)> {
+        match base {
+            Base::Decimal => 
+                if signed {
+                    FlexInt::from_signed_decimal_string(chars, bits)
+                } else {
+                    FlexInt::from_unsigned_decimal_string(chars, bits)
+                }
+            Base::Hexadecimal =>
+                if signed {
+                    FlexInt::from_signed_hex_string(chars, bits)
+                } else {
+                    FlexInt::from_unsigned_hex_string(chars, bits)
+                }
+            Base::Binary => 
+                if signed {
+                    FlexInt::from_signed_binary_string(chars, bits)
+                } else {
+                    FlexInt::from_unsigned_binary_string(chars, bits)
+                }
+        }
     }
 }
