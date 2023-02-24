@@ -80,7 +80,7 @@ pub struct Parser<'g, N: NumberParser> {
     pub ptr: usize,
     pub eval_config: eval::Configuration,
     pub constant_overflow_spans: Vec<GlyphSpan>,
-    pub next_number_negated: bool,
+    pub next_number_unary_negations: usize,
 
     _phantom: PhantomData<N>,
 }
@@ -92,7 +92,7 @@ impl<'g, N: NumberParser> Parser<'g, N> {
             ptr: 0,
             eval_config,
             constant_overflow_spans: vec![],
-            next_number_negated: false,
+            next_number_unary_negations: 0,
 
             _phantom: PhantomData,
         }
@@ -172,14 +172,14 @@ impl<'g, N: NumberParser> Parser<'g, N> {
     fn parse_bottom(&mut self) -> Result<Node, ParserError> {
         // Subtract as negation
         if let Some(Glyph::Subtract) = self.here() {
-            self.next_number_negated = !self.next_number_negated;
+            self.next_number_unary_negations += 1;
             self.advance();
             return self.parse_bottom();
         }
 
         // Number
         if let Some(g @ (Glyph::Digit(_) | Glyph::HexBase | Glyph::BinaryBase | Glyph::DecimalBase)) = self.here() {
-            let start = self.ptr;
+            let mut start = self.ptr;
             let mut digits = vec![];
             let mut base = None;
 
@@ -205,11 +205,13 @@ impl<'g, N: NumberParser> Parser<'g, N> {
             };
 
             // Construct string of digits, considering negation
+            // (Specifically we want an odd number of unary negations; -2 is negative, --2 isn't)
             let mut str: String = digits.into_iter().collect();
             let mut force_parse_signed = false;
-            if self.next_number_negated {
+            if self.next_number_unary_negations % 2 == 1 {
+                start -= self.next_number_unary_negations;
                 str.insert(0, '-');
-                self.next_number_negated = false;
+                self.next_number_unary_negations = 0;
 
                 // We'll need to parse this number as signed, even though the underlying data type
                 // is unsigned
