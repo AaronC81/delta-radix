@@ -51,7 +51,7 @@ and use the `+`/`-` keys to choose signed or unsigned respectively.
 
 ## Things left to do
 
-- [ ] Faster parsing mode for constant overflow warnings
+- [X] Faster parsing mode for constant overflow warnings
   - Parsing is slow, largely because of `FlexInt::from_unsigned_decimal_string` 
   - Wouldn't be a problem for evaluation, but is annoying during editing (key-press lag)
   - Either add a faster overall parsing mode just for constant overflow warnings, or versions of 

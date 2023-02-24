@@ -4,7 +4,7 @@ use flex_int::FlexInt;
 
 use crate::menu;
 
-use self::{eval::{EvaluationResult, Configuration, DataType, evaluate}, parse::{Parser, Node, ParserError, NumberParser}};
+use self::{eval::{EvaluationResult, Configuration, DataType, evaluate}, parse::{Parser, Node, ParserError, NumberParser, ConstantOverflowChecker}};
 
 mod eval;
 mod parse;
@@ -33,6 +33,14 @@ impl Base {
             Glyph::BinaryBase => Some(Base::Binary),
             Glyph::DecimalBase => Some(Base::Decimal),
             _ => None,
+        }
+    }
+    
+    fn radix(&self) -> u32 {
+        match self {
+            Base::Decimal => 10,
+            Base::Hexadecimal => 16,
+            Base::Binary => 2,
         }
     }
 }
@@ -149,7 +157,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
     fn draw_expression(&mut self) {
         // Try to parse and get warning spans
-        let (parser, _) = self.parse::<FlexInt>();
+        let (parser, _) = self.parse::<ConstantOverflowChecker>();
         let warning_indices = parser.constant_overflow_spans.iter()
             .flat_map(|s| s.indices().collect::<Vec<_>>())
             .collect::<Vec<_>>();
