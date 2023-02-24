@@ -19,6 +19,8 @@ impl<'s> delta_radix_hal::Keypad for AsyncKeypadReceiver<'s> {
     }
 }
 
+pub const ASYNC_KEYPAD_START_MAGIC: u32 = 0xCAFECAFE;
+
 pub fn async_keypad_core1() -> ! {
     // Grab some important peripherals
     let mut pac = unsafe { pac::Peripherals::steal() };
@@ -34,7 +36,7 @@ pub fn async_keypad_core1() -> ! {
 
     // Wait until the magic word over FIFO
     loop {
-        if sio.fifo.read_blocking() == 0xCAFECAFE {
+        if sio.fifo.read_blocking() == ASYNC_KEYPAD_START_MAGIC {
             break;
         }
     }

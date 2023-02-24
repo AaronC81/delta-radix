@@ -8,7 +8,7 @@ use alloc_cortex_m::CortexMHeap;
 use cortex_m_rt::entry;
 use delta_radix_hal::Key;
 use embedded_hal::digital::v2::OutputPin;
-use hal::{PicoHal, async_keypad::{async_keypad_core1, AsyncKeypadReceiver}};
+use hal::{PicoHal, async_keypad::{async_keypad_core1, AsyncKeypadReceiver, ASYNC_KEYPAD_START_MAGIC}};
 use hd44780_driver::HD44780;
 use panic::init_panic_peripherals;
 use rp_pico::{hal::{Watchdog, Sio, clocks::init_clocks_and_plls, Clock, multicore::{Stack, Multicore}}, pac, Pins};
@@ -98,7 +98,7 @@ fn main() -> ! {
     init_panic_peripherals(lives_forever(&mut hal));
 
     // Tell the other core to get going
-    sio.fifo.write(0xCAFECAFE);    
+    sio.fifo.write(ASYNC_KEYPAD_START_MAGIC);    
 
     executor::execute(delta_radix_os::main(&mut hal));
     
