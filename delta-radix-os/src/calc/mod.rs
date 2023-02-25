@@ -49,8 +49,10 @@ pub struct CalculatorApplication<'h, H: Hal> {
     hal: &'h mut H,
 
     state: ApplicationState,
-    output_format: Base,
     input_shifted: bool,
+
+    output_format: Base,
+    signed_result: Option<bool>,
 
     glyphs: Vec<Glyph>,
     cursor_pos: usize,
@@ -69,6 +71,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             hal,
             state: ApplicationState::Normal,
             output_format: Base::Decimal,
+            signed_result: None,
             input_shifted: false,
             glyphs: vec![],
             cursor_pos: 0,
@@ -134,6 +137,14 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
         let name = self.eval_config.data_type.concise_name();
         disp.print_string(&name);
+        let mut format_len = name.len();
+
+        if let Some(sign) = self.signed_result {
+            disp.print_char('>');
+            disp.print_char(if sign { 'S' } else { 'U' });
+            format_len += 2;
+        }
+
         disp.print_char(' ');
 
         let has_overflow = if let Some(Ok(r)) = &self.eval_result {
@@ -143,7 +154,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         };
         let overflow_marker = " OVER";
 
-        let mut ptr = name.len() + 1;
+        let mut ptr = format_len + 1;
         let ptr_target = if has_overflow { Self::WIDTH - overflow_marker.len() } else { Self::WIDTH };
         while ptr < ptr_target {
             if self.input_shifted {
@@ -220,23 +231,24 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             if let Some(result) = &self.eval_result {
                 match result {
                     Ok(result) => {
+                        let signed = self.signed_result.unwrap_or(self.eval_config.data_type.signed);
                         match self.output_format {
                             Base::Decimal => {
-                                str = if self.eval_config.data_type.signed {
+                                str = if signed {
                                     result.result.to_signed_decimal_string()
                                 } else {
                                     result.result.to_unsigned_decimal_string()
                                 };
                             }
                             Base::Hexadecimal => {
-                                str = format!("x{}", if self.eval_config.data_type.signed {
+                                str = format!("x{}", if signed {
                                     result.result.to_signed_hex_string()
                                 } else {
                                     result.result.to_unsigned_hex_string()
                                 });
                             }
                             Base::Binary => {
-                                str = format!("b{}", if self.eval_config.data_type.signed {
+                                str = format!("b{}", if signed {
                                     result.result.to_signed_binary_string()
                                 } else {
                                     result.result.to_unsigned_binary_string()
