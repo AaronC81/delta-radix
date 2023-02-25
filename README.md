@@ -62,4 +62,4 @@ and use the `+`/`-` keys to choose signed or unsigned respectively.
 - [ ] Parentheses
 - [ ] Scrolling expression input
 - [ ] Show result as if unsigned
-- [ ] Sleep after inactivity
+- [X] Sleep after inactivity
