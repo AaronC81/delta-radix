@@ -61,6 +61,7 @@ pub enum ParserErrorKind {
     DuplicateBase,
     InvalidNumber,
     UnexpectedGlyph(Glyph),
+    ExpectedParen,
     UnexpectedEnd,
 }
 
@@ -70,6 +71,7 @@ impl ParserErrorKind {
             ParserErrorKind::DuplicateBase => "duplicate base".to_string(),
             ParserErrorKind::InvalidNumber => "invalid number".to_string(),
             ParserErrorKind::UnexpectedGlyph(g) => format!("unexpected {}", g.describe()),
+            ParserErrorKind::ExpectedParen => "expected paren".to_string(),
             ParserErrorKind::UnexpectedEnd => "unexpected end".to_string(),
         }
     }
@@ -175,6 +177,18 @@ impl<'g, N: NumberParser> Parser<'g, N> {
             self.next_number_unary_negations += 1;
             self.advance();
             return self.parse_bottom();
+        }
+
+        // Check for parentheses
+        if let Some(Glyph::LeftParen) = self.here() {
+            self.advance();
+            let node = self.parse_top_level()?;
+            let Some(Glyph::RightParen) = self.here() else {
+                return Err(self.create_error(ParserErrorKind::ExpectedParen.into()))
+            };
+            self.advance();
+
+            return Ok(node);
         }
 
         // Number

@@ -134,3 +134,24 @@ fn test_constant_overflow_triggers_eval_overflow() {
     assert_eq!(hal.result(), "0");
     assert!(hal.overflow());
 }
+
+#[test]
+fn test_parentheses() {
+    let hal = run_os(&keys!(
+        // 2*(5+3)*4
+        Number(2),
+        Key::Multiply,
+        Shifted(Key::Digit(0)),
+        Number(5),
+        Key::Add,
+        Number(3),
+        Key::Right,
+        Key::Multiply,
+        Number(4),
+
+        Key::Exe,
+    ));
+    assert_eq!(hal.expression(), "2*(5+3)*4");
+    assert_eq!(hal.result(), (2*(5+3)*4).to_string());
+    assert!(!hal.overflow());
+}
