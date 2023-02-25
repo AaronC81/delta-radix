@@ -78,7 +78,7 @@ pub trait Display {
     
                 Glyph::Add => '+',
                 Glyph::Subtract => '-',
-                Glyph::Multiply => '×',
+                Glyph::Multiply => '*',
                 Glyph::Divide => '÷',
 
                 Glyph::LeftParen => '(',
