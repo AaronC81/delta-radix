@@ -1,4 +1,5 @@
 use delta_radix_hal::{Key, Keypad, Display};
+use embedded_hal::digital::v2::OutputPin;
 use embedded_time::duration::{Extensions, Duration, Seconds, Microseconds};
 use rp_pico::{pac::{self, interrupt}, hal::{Sio, multicore::Stack, sio::SioFifo, timer::Alarm0, Timer}, Pins};
 
@@ -12,14 +13,14 @@ pub struct AsyncKeypadReceiver<'s> {
 
 impl<'s> delta_radix_hal::Keypad for AsyncKeypadReceiver<'s> {
     async fn wait_key(&mut self) -> Key {
+        let hal = get_panic_hal();
+
         loop {
             let message = self.fifo.read_blocking();
 
             if message == ASYNC_KEYPAD_SLEEP_MAGIC {
-                let hal = get_panic_hal();
                 hal.display.clear();
-                hal.display.set_position(0, 0);
-                hal.display.print_string("zzz...");
+                hal.display.backlight.set_low().unwrap();
 
                 // TODO: return some special key which makes the calculator clear its expression
                 // and result?
@@ -27,6 +28,7 @@ impl<'s> delta_radix_hal::Keypad for AsyncKeypadReceiver<'s> {
             }
 
             if let Some(key) = Key::from_u32(message) {
+                hal.display.backlight.set_high().unwrap();
                 return key;
             }
         }

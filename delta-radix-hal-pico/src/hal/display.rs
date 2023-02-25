@@ -1,7 +1,7 @@
 use cortex_m::delay::Delay;
 use delta_radix_hal::DisplaySpecialCharacter;
 use hd44780_driver::{bus::FourBitBus, HD44780, Cursor, CursorBlink};
-use rp_pico::hal::gpio::{bank0::{Gpio11, Gpio10, Gpio9, Gpio8, Gpio7, Gpio6}, Output, Pin, PushPull};
+use rp_pico::hal::gpio::{bank0::{Gpio11, Gpio10, Gpio9, Gpio8, Gpio7, Gpio6, Gpio5}, Output, Pin, PushPull};
 
 type LcdRs = Gpio11;
 type LcdEn = Gpio10;
@@ -10,8 +10,11 @@ type LcdD5 = Gpio8;
 type LcdD6 = Gpio7;
 type LcdD7 = Gpio6;
 
+type LcdBacklight = Gpio5;
+
 pub struct LcdDisplay<'d> {
     pub delay: &'d mut Delay,
+    pub backlight: Pin<LcdBacklight, Output<PushPull>>,
     pub lcd: HD44780<
         FourBitBus<
             Pin<LcdRs, Output<PushPull>>,

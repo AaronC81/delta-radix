@@ -75,8 +75,8 @@ fn main() -> ! {
     );
     let mut led = pins.led.into_push_pull_output();
 
-    let mut bl = pins.gpio5.into_push_pull_output();
-    bl.set_high().unwrap();
+    let mut backlight = pins.gpio5.into_push_pull_output();
+    backlight.set_high().unwrap();
 
     // const int rs = 11, en = 10, d4 = 9, d5 = 8, d6 = 7, d7 = 6;
     let rs = pins.gpio11.into_push_pull_output();
@@ -89,7 +89,7 @@ fn main() -> ! {
     let lcd = HD44780::new_4bit(rs, en, d4, d5, d6, d7, &mut delay).unwrap();
 
     let mut hal = PicoHal {
-        display: hal::LcdDisplay { lcd, delay: lives_forever(&mut delay) },
+        display: hal::LcdDisplay { lcd, delay: lives_forever(&mut delay), backlight },
         keypad: AsyncKeypadReceiver {
             fifo: lives_forever(&mut sio.fifo),
         },
