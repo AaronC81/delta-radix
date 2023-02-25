@@ -17,6 +17,7 @@ enum ApplicationState {
         bits_digits: String,
         bits_cursor_pos: usize,
     },
+    OutputSignedMenu,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -127,6 +128,25 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                 if !self.eval_config.data_type.signed {
                     display.print_string(" <");
                 }
+            }
+
+            ApplicationState::OutputSignedMenu => {
+                let display = self.hal.display_mut();
+
+                display.clear();
+                display.print_string("Ans signedness ovrd.");
+
+                display.set_position(0, 1);
+                display.print_string("DEL) None    ");
+                if self.signed_result.is_none() { display.print_string(" <"); }
+
+                display.set_position(0, 2);
+                display.print_string("  -) Signed  ");
+                if self.signed_result == Some(true) { display.print_string(" <"); }
+
+                display.set_position(0, 3);
+                display.print_string("  +) Unsigned");
+                if self.signed_result == Some(false) { display.print_string(" <"); }
             }
         }
     }
@@ -298,6 +318,12 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                             self.clear_evaluation(true);
                         }
 
+                        Key::FormatSelect => {
+                            self.input_shifted = false;
+                            self.state = ApplicationState::OutputSignedMenu;
+                            self.draw_full();
+                        }
+
                         _ => (),
                     }
                 } else {
@@ -420,6 +446,29 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                         self.eval_config.data_type.bits = bits;
                     }
 
+                    self.state = ApplicationState::Normal;
+                    self.clear_evaluation(true);
+                    self.draw_full();
+                }
+
+                _ => (),
+            }
+
+            ApplicationState::OutputSignedMenu => match key {
+                Key::Delete => {
+                    self.signed_result = None;
+                    self.draw_full();
+                }
+                Key::Add => {
+                    self.signed_result = Some(false);
+                    self.draw_full();
+                }
+                Key::Subtract => {
+                    self.signed_result = Some(true);
+                    self.draw_full();
+                }
+
+                Key::FormatSelect | Key::Menu | Key::Exe => {
                     self.state = ApplicationState::Normal;
                     self.clear_evaluation(true);
                     self.draw_full();

@@ -63,5 +63,5 @@ Shift > Menu shows a menu of meta options, such as entering the bootloader.
 - [ ] Variables
 - [X] Parentheses
 - [X] Scrolling expression input
-- [ ] Show result as if unsigned
+- [X] Show result as if unsigned
 - [X] Sleep after inactivity
