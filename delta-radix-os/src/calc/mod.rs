@@ -251,7 +251,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
     }
 
     async fn process_input_and_redraw(&mut self, key: Key) {
-        if menu::check_menu(self.hal, key).await {
+        if menu::check_menu(self.hal, key, self.input_shifted).await {
             self.draw_full();
             return
         }
@@ -263,15 +263,6 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                         Key::Shift => {
                             self.input_shifted = false;
                             self.draw_header();
-                        }
-                        Key::FormatSelect => {
-                            self.input_shifted = false;
-                            let bits_digits = self.eval_config.data_type.bits.to_string();
-                            self.state = ApplicationState::FormatMenu {
-                                bits_cursor_pos: bits_digits.len(),
-                                bits_digits,
-                            };
-                            self.draw_full();
                         }
                         Key::Delete => {
                             self.clear_all(true);
@@ -332,7 +323,16 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                             self.clear_all(false);
                         }
 
-                        Key::Menu | Key::DebugTerminate => (),
+                        Key::Menu => {
+                            let bits_digits = self.eval_config.data_type.bits.to_string();
+                            self.state = ApplicationState::FormatMenu {
+                                bits_cursor_pos: bits_digits.len(),
+                                bits_digits,
+                            };
+                            self.draw_full();
+                        }
+                        
+                        Key::DebugTerminate => (),
                     }
                 },
             
@@ -380,7 +380,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                     self.draw_full();
                 }
 
-                Key::FormatSelect | Key::Exe => {
+                Key::FormatSelect | Key::Menu | Key::Exe => {
                     // Apply bits evaluation settings
                     if let Ok(mut bits) = bits_digits.parse() {
                         // Minimum supported number of bits

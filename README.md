@@ -46,8 +46,10 @@ number without a base specifier is always interpreted as a decimal.
 To change the result base, press the Format Select (`->`) key and then the base you'd like. Press
 the Format Select key twice to return to decimal.
 
-To change the arithmetic data type, use Shift (`^`) > Format Select (`->`). Enter a number of bits,
-and use the `+`/`-` keys to choose signed or unsigned respectively.
+To change the arithmetic data type, use the Menu key. Enter a number of bits, and use the `+`/`-`
+keys to choose signed or unsigned respectively.
+
+Shift > Menu shows a menu of meta options, such as entering the bootloader.
 
 ## Things left to do
 

@@ -35,7 +35,7 @@ impl KeySequence for SetFormat {
         let mut keys = vec![];
 
         // Open the format menu
-        keys.extend(Shifted(Key::FormatSelect).keys());
+        keys.push(Key::Menu);
 
         // Delete the existing size - good enough!
         for _ in 0..10 {
