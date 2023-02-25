@@ -10,7 +10,7 @@ use delta_radix_hal::Key;
 use embedded_hal::digital::v2::OutputPin;
 use hal::{PicoHal, async_keypad::{async_keypad_core1, AsyncKeypadReceiver, ASYNC_KEYPAD_START_MAGIC}};
 use hd44780_driver::HD44780;
-use panic::init_panic_peripherals;
+use panic::init_panic_hal;
 use rp_pico::{hal::{Watchdog, Sio, clocks::init_clocks_and_plls, Clock, multicore::{Stack, Multicore}}, pac, Pins};
 use embedded_time::{fixed_point::FixedPoint};
 
@@ -95,7 +95,7 @@ fn main() -> ! {
         },
         time: hal::DelayTime { delay: lives_forever(&mut delay) },
     };
-    init_panic_peripherals(lives_forever(&mut hal));
+    init_panic_hal(lives_forever(&mut hal));
 
     // Tell the other core to get going
     sio.fifo.write(ASYNC_KEYPAD_START_MAGIC);    

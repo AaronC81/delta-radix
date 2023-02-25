@@ -11,14 +11,16 @@ use crate::hal::{LcdDisplay, PicoHal};
 
 static mut PANIC_HAL: Option<&'static mut PicoHal> = None;
 
-pub fn init_panic_peripherals(hal: &'static mut PicoHal) {
+pub fn init_panic_hal(hal: &'static mut PicoHal) {
     unsafe {
         PANIC_HAL = Some(hal)
     }
 }
 
-struct PanicPeripherals<'d> {
-    display: &'d mut LcdDisplay<'d>,
+pub fn get_panic_hal() -> &'static mut PicoHal<'static> {
+    unsafe {
+        PANIC_HAL.as_mut().unwrap()
+    }
 }
 
 #[panic_handler]
@@ -26,7 +28,7 @@ struct PanicPeripherals<'d> {
 fn panic(info: &PanicInfo) -> ! {
     use crate::hal::enter_bootloader;
 
-    let mut periphs = unsafe { PANIC_HAL.as_mut() }.unwrap();
+    let mut periphs = get_panic_hal();
     // periphs.display.clear();
     periphs.display.set_position(0, 0);
     
