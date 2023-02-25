@@ -168,6 +168,8 @@ impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
         self.print_char(
             match glyph {
                 Glyph::Multiply => Self::CUSTOM_CHAR_INDEX_MULTIPLY as char,
+                // Not aligned with baseline of other operators, but it'll do!
+                Glyph::Divide => 0b1111_1101 as char,
                 _ => glyph.char(),
             }
         );
