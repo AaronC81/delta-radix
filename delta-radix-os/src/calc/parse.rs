@@ -287,7 +287,11 @@ impl NumberParser for FlexInt {
 pub struct ConstantOverflowChecker;
 impl NumberParser for ConstantOverflowChecker {
     fn parse(chars: &str, base: Base, signed: bool, bits: usize) -> Option<(FlexInt, bool)> {
-        let num = i128::from_str_radix(chars, base.radix()).ok()?;
+        let Ok(num) = i128::from_str_radix(chars, base.radix()) else {
+            // To play it safe, treat parse errors as constant overflow
+            // (otherwise, ludicrously large numbers may overflow)
+            return Some((FlexInt::new(1), true));
+        };
         let overflow = if signed {
             num >= 2_i128.pow(bits as u32 - 1) || num < -1 * 2_i128.pow(bits as u32 - 1)
         } else {
