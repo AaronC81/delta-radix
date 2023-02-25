@@ -36,6 +36,8 @@ impl<'s> delta_radix_hal::Keypad for AsyncKeypadReceiver<'s> {
 pub const ASYNC_KEYPAD_START_MAGIC: u32 = 0xCAFECAFE;
 pub const ASYNC_KEYPAD_SLEEP_MAGIC: u32 = 0x00BEDBED;
 
+pub const SLEEP_TIME: Microseconds = Microseconds(120_000_000);
+
 pub fn async_keypad_core1() -> ! {
     // Grab some important peripherals
     let mut pac = unsafe { pac::Peripherals::steal() };
@@ -85,7 +87,7 @@ pub fn async_keypad_core1() -> ! {
     loop {
         // Set up inactivity timer
         alarm.disable_interrupt();
-        alarm.schedule(Microseconds(5_000_000)).unwrap();
+        alarm.schedule(SLEEP_TIME).unwrap();
         alarm.enable_interrupt();
     
         // Wait for press
