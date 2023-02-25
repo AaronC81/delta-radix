@@ -122,3 +122,15 @@ fn test_clear_all() {
     assert_eq!(hal.result(), "456");
     assert!(!hal.overflow());
 }
+
+#[test]
+fn test_constant_overflow_triggers_eval_overflow() {
+    let hal = run_os(&keys!(
+        SetFormat(8, false),
+        Number(256),
+        Key::Exe,
+    ));
+    assert_eq!(hal.expression(), "256");
+    assert_eq!(hal.result(), "0");
+    assert!(hal.overflow());
+}
