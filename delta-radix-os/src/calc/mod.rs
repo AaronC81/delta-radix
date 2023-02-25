@@ -275,6 +275,17 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                             self.draw_full();
                         }
 
+                        Key::Digit(0) => {
+                            self.input_shifted = false;
+                            
+                            // Insert two characters and move between them
+                            self.glyphs.insert(self.cursor_pos, Glyph::LeftParen);
+                            self.cursor_pos += 1;
+                            self.glyphs.insert(self.cursor_pos, Glyph::RightParen);
+                            self.draw_expression();
+                            self.clear_evaluation(true);
+                        }
+
                         _ => (),
                     }
                 } else {

@@ -7,6 +7,9 @@ pub enum Glyph {
     Multiply,
     Divide,
 
+    LeftParen,
+    RightParen,
+
     HexBase,
     BinaryBase,
     DecimalBase,
@@ -21,6 +24,9 @@ impl Glyph {
             Self::Subtract => "subtract",
             Self::Multiply => "multiply",
             Self::Divide => "divide",
+
+            Self::LeftParen => "l-paren",
+            Self::RightParen => "r-paren",
 
             Self::HexBase => "hex base",
             Self::BinaryBase => "bin base",
@@ -74,6 +80,9 @@ pub trait Display {
                 Glyph::Subtract => '-',
                 Glyph::Multiply => '×',
                 Glyph::Divide => '÷',
+
+                Glyph::LeftParen => '(',
+                Glyph::RightParen => ')',
     
                 Glyph::HexBase => 'x',
                 Glyph::BinaryBase => 'b',
