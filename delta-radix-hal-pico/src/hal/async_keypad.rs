@@ -1,5 +1,6 @@
 use delta_radix_hal::{Key, Keypad};
-use rp_pico::{pac, hal::{Sio, multicore::Stack, sio::SioFifo}, Pins};
+use embedded_time::duration::{Extensions, Duration, Seconds, Microseconds};
+use rp_pico::{pac::{self, interrupt}, hal::{Sio, multicore::Stack, sio::SioFifo, timer::Alarm0, Timer}, Pins};
 
 use crate::{lives_forever, executor};
 
@@ -60,10 +61,31 @@ pub fn async_keypad_core1() -> ! {
 
         currently_pressed: None,
     };
+
+    // Set up timer stuff
+    unsafe { pac::NVIC::unmask(pac::Interrupt::TIMER_IRQ_0); }
+    let mut timer = Timer::new(pac.TIMER, &mut pac.RESETS);
+    let mut alarm = timer.alarm_0().unwrap();
+    alarm.schedule(Microseconds(5_000_000)).unwrap();
+    alarm.enable_interrupt();
     
     // For the rest of time, loop looking for buttons
     loop {
         let key = executor::execute(matrix.wait_key());
         sio.fifo.write(key.to_u32());
     }
+}
+
+#[interrupt]
+fn TIMER_IRQ_0() {
+    let mut pac = unsafe { pac::Peripherals::steal() };
+    let mut sio = Sio::new(pac.SIO);
+
+    sio.fifo.write(Key::Digit(1).to_u32());
+    sio.fifo.write(Key::Digit(2).to_u32());
+    sio.fifo.write(Key::Digit(3).to_u32());
+
+    let mut timer = Timer::new(pac.TIMER, &mut pac.RESETS);
+    let mut alarm = timer.alarm_0().unwrap();
+    alarm.clear_interrupt();
 }
