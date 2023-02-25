@@ -428,7 +428,6 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
     fn clear_evaluation(&mut self, redraw: bool) {
         self.eval_result = None;
-        self.constant_overflows = false;
 
         if redraw {
             self.draw_result();
