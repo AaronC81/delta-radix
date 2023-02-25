@@ -274,8 +274,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                             self.draw_full();
                         }
                         Key::Delete => {
-                            self.input_shifted = false;
-                            self.clear_all();
+                            self.clear_all(true);
                             self.draw_full();
                         }
 
@@ -309,7 +308,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                                 self.cursor_pos -= 1;
                                 self.glyphs.remove(self.cursor_pos);
                                 self.draw_expression();
-                                self.clear_evaluation();
+                                self.clear_evaluation(true);
                             }
                         },
                         Key::Exe => {
@@ -326,6 +325,11 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                         Key::Shift => {
                             self.input_shifted = true;
                             self.draw_header();
+                        }
+
+                        Key::Sleep => {
+                            // Do not redraw - the HAL is expected to deal with this
+                            self.clear_all(false);
                         }
 
                         Key::Menu | Key::DebugTerminate => (),
@@ -388,7 +392,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                     }
 
                     self.state = ApplicationState::Normal;
-                    self.clear_evaluation();
+                    self.clear_evaluation(true);
                     self.draw_full();
                 }
 
@@ -402,7 +406,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         self.glyphs.insert(self.cursor_pos, glyph);
         self.cursor_pos += 1;
         self.draw_expression();
-        self.clear_evaluation();
+        self.clear_evaluation(true);
     }
 
     fn set_output_format_and_redraw(&mut self, base: Base) {
@@ -422,16 +426,20 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         self.eval_result = Some(node.map(|node| evaluate(&node, &self.eval_config)))
     }
 
-    fn clear_evaluation(&mut self) {
+    fn clear_evaluation(&mut self, redraw: bool) {
         self.eval_result = None;
         self.constant_overflows = false;
-        self.draw_result();
-        self.draw_header();
+
+        if redraw {
+            self.draw_result();
+            self.draw_header();
+        }
     }
 
-    fn clear_all(&mut self) {
-        self.clear_evaluation();
+    fn clear_all(&mut self, redraw: bool) {
+        self.clear_evaluation(redraw);
         self.glyphs.clear();
         self.cursor_pos = 0;
+        self.input_shifted = false;
     }
 }

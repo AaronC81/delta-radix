@@ -22,9 +22,7 @@ impl<'s> delta_radix_hal::Keypad for AsyncKeypadReceiver<'s> {
                 hal.display.clear();
                 hal.display.backlight.set_low().unwrap();
 
-                // TODO: return some special key which makes the calculator clear its expression
-                // and result?
-                continue;
+                return Key::Sleep;
             }
 
             if let Some(key) = Key::from_u32(message) {

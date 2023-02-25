@@ -19,7 +19,9 @@ pub enum Key {
 
     FormatSelect,
 
+    // Neither are actual keys, just markers to communicate things to OS
     DebugTerminate,
+    Sleep,
 }
 
 impl Key {
@@ -40,6 +42,7 @@ impl Key {
             Key::BinaryBase => 0x10C,
             Key::FormatSelect => 0x10D,
             Key::DebugTerminate => 0x10E,
+            Key::Sleep => 0x10F,
         }
     }
 
@@ -60,6 +63,7 @@ impl Key {
             0x10C => Key::BinaryBase,
             0x10D => Key::FormatSelect,
             0x10E => Key::DebugTerminate,
+            0x10F => Key::Sleep,
 
             _ => return None,
         })
