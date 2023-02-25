@@ -1,5 +1,5 @@
 use cortex_m::delay::Delay;
-use delta_radix_hal::DisplaySpecialCharacter;
+use delta_radix_hal::{DisplaySpecialCharacter, Glyph};
 use hd44780_driver::{bus::FourBitBus, HD44780, Cursor, CursorBlink};
 use rp_pico::hal::gpio::{bank0::{Gpio11, Gpio10, Gpio9, Gpio8, Gpio7, Gpio6, Gpio5}, Output, Pin, PushPull};
 
@@ -98,6 +98,18 @@ impl<'d> LcdDisplay<'d> {
         0b00001001,
         0b00010000,
     ];
+
+    const CUSTOM_CHAR_INDEX_MULTIPLY: u8 = 5;
+    const CUSTOM_CHAR_DATA_MULTIPLY: [u8; 8] = [
+        0b00000000,
+        0b00010001,
+        0b00001010,
+        0b00000100,
+        0b00001010,
+        0b00010001,
+        0b00000000,
+        0b00000000,
+    ];
 }
 
 impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
@@ -107,6 +119,7 @@ impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
         self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_WARNING, Self::CUSTOM_CHAR_DATA_WARNING, self.delay).unwrap();
         self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_CURSOR_LEFT_WITH_WARNING, Self::CUSTOM_CHAR_DATA_CURSOR_LEFT_WITH_WARNING, self.delay).unwrap();
         self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT_WITH_WARNING, Self::CUSTOM_CHAR_DATA_CURSOR_RIGHT_WITH_WARNING, self.delay).unwrap();
+        self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_MULTIPLY, Self::CUSTOM_CHAR_DATA_MULTIPLY, self.delay).unwrap();
         
         self.clear();
 
@@ -149,5 +162,14 @@ impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
             DisplaySpecialCharacter::CursorRightWithWarning => Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT_WITH_WARNING,
         };
         self.lcd.write_byte(byte, self.delay).unwrap();
+    }
+
+    fn print_glyph(&mut self, glyph: Glyph) {
+        self.print_char(
+            match glyph {
+                Glyph::Multiply => Self::CUSTOM_CHAR_INDEX_MULTIPLY as char,
+                _ => glyph.char(),
+            }
+        );
     }
 }
