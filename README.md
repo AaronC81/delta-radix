@@ -62,6 +62,6 @@ Shift > Menu shows a menu of meta options, such as entering the bootloader.
 - [X] "Clear" key (shift + del?)
 - [ ] Variables
 - [ ] Parentheses
-- [ ] Scrolling expression input
+- [X] Scrolling expression input
 - [ ] Show result as if unsigned
 - [X] Sleep after inactivity

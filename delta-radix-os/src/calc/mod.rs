@@ -55,12 +55,15 @@ pub struct CalculatorApplication<'h, H: Hal> {
     glyphs: Vec<Glyph>,
     cursor_pos: usize,
     constant_overflows: bool,
+    scroll_offset: usize,
 
     eval_config: Configuration,
     eval_result: Option<Result<EvaluationResult, ParserError>>,
 }
 
 impl<'h, H: Hal> CalculatorApplication<'h, H> {
+    pub const WIDTH: usize = 20;
+
     pub fn new(hal: &'h mut H) -> Self {
         Self {
             hal,
@@ -69,6 +72,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             input_shifted: false,
             glyphs: vec![],
             cursor_pos: 0,
+            scroll_offset: 0,
             eval_config: Configuration {
                 data_type: DataType {
                     bits: 16,
@@ -140,7 +144,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         let overflow_marker = " OVER";
 
         let mut ptr = name.len() + 1;
-        let ptr_target = if has_overflow { 20 - overflow_marker.len() } else { 20 };
+        let ptr_target = if has_overflow { Self::WIDTH - overflow_marker.len() } else { Self::WIDTH };
         while ptr < ptr_target {
             if self.input_shifted {
                 disp.print_char('^');
@@ -156,6 +160,8 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
     }
 
     fn draw_expression(&mut self) {
+        self.adjust_scroll();
+
         // Try to parse and get warning spans
         let (parser, _) = self.parse::<ConstantOverflowChecker>();
         let warning_indices = parser.constant_overflow_spans.iter()
@@ -169,17 +175,17 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         // Draw expression
         disp.set_position(0, 2);
         let mut chars_written = 0;
-        for glyph in &self.glyphs {
+        for glyph in self.glyphs.iter().skip(self.scroll_offset).take(Self::WIDTH) {
             disp.print_glyph(*glyph);
             chars_written += 1;
         }
-        for _ in chars_written..20 {
+        for _ in chars_written..Self::WIDTH {
             disp.print_char(' ');
         }
 
         // Draw cursor
         disp.set_position(0, 1);
-        for i in 0..20 {
+        for i in self.scroll_offset..(self.scroll_offset + Self::WIDTH) {
             let warn = warning_indices.contains(&i);
             if i + 1 == self.cursor_pos {
                 if warn {
@@ -242,11 +248,11 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                     Err(e) => str = e.describe(),
                 }
             } else {
-                str = str::repeat(" ", 20);
+                str = str::repeat(" ", Self::WIDTH);
             }
         }
 
-        disp.set_position(20 - str.len() as u8, 3);
+        disp.set_position((Self::WIDTH - str.len()) as u8, 3);
         disp.print_string(&str);
     }
 
@@ -439,6 +445,19 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         self.clear_evaluation(redraw);
         self.glyphs.clear();
         self.cursor_pos = 0;
+        self.scroll_offset = 0;
         self.input_shifted = false;
+    }
+
+    fn adjust_scroll(&mut self) {
+        // Check if we need to scroll to the left
+        if self.cursor_pos == self.scroll_offset && self.cursor_pos > 0 {
+            self.scroll_offset -= 1;
+        }
+
+        // Check if we need to scroll to the right
+        if self.cursor_pos == self.scroll_offset + Self::WIDTH {
+            self.scroll_offset += 1;
+        }
     }
 }
