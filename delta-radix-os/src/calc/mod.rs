@@ -75,7 +75,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             scroll_offset: 0,
             eval_config: Configuration {
                 data_type: DataType {
-                    bits: 16,
+                    bits: 32,
                     signed: false,
                 }
             },
