@@ -27,6 +27,91 @@ pub struct LcdDisplay<'d> {
     >
 }
 
+pub struct CustomChar {
+    pub index: u8,
+    pub data: [u8; 8],
+}
+
+impl CustomChar {
+    pub const fn new(index: u8, data: [u8; 8]) -> Self {
+        Self { index, data }
+    }
+
+    pub fn register<'d>(&self, display: &mut LcdDisplay<'d>) {
+        display.lcd.set_custom_char(self.index, self.data, display.delay).unwrap();
+    }
+}
+
+mod chars {
+    use super::CustomChar;
+
+    pub const CURSOR_LEFT: CustomChar = CustomChar::new(0, [
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000100,
+        0b00000010,
+        0b00000001,
+    ]);
+
+    pub const CURSOR_RIGHT: CustomChar = CustomChar::new(1, [
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000100,
+        0b00001000,
+        0b00010000,
+    ]);
+
+    pub const WARNING: CustomChar = CustomChar::new(2, [
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00010101,
+        0b00000000,
+    ]);
+
+    pub const CURSOR_LEFT_WITH_WARNING: CustomChar = CustomChar::new(3, [
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000100,
+        0b00010010,
+        0b00000001,
+    ]);
+
+    pub const CURSOR_RIGHT_WITH_WARNING: CustomChar = CustomChar::new(4, [
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000000,
+        0b00000100,
+        0b00001001,
+        0b00010000,
+    ]);
+
+    pub const MULTIPLY: CustomChar = CustomChar::new(5, [
+        0b00000000,
+        0b00010001,
+        0b00001010,
+        0b00000100,
+        0b00001010,
+        0b00010001,
+        0b00000000,
+        0b00000000,
+    ]);
+}
+
 impl<'d> LcdDisplay<'d> {
     /// The absolute cursor position at which each line starts.
     const CURSOR_LINE_OFFSETS: [u8; 4] = [
@@ -38,88 +123,16 @@ impl<'d> LcdDisplay<'d> {
         0x14,
         0x54,
     ];
-
-    const CUSTOM_CHAR_INDEX_CURSOR_LEFT: u8 = 0;
-    const CUSTOM_CHAR_DATA_CURSOR_LEFT: [u8; 8] = [
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000100,
-        0b00000010,
-        0b00000001,
-    ];
-
-    const CUSTOM_CHAR_INDEX_CURSOR_RIGHT: u8 = 1;
-    const CUSTOM_CHAR_DATA_CURSOR_RIGHT: [u8; 8] = [
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000100,
-        0b00001000,
-        0b00010000,
-    ];
-
-    const CUSTOM_CHAR_INDEX_WARNING: u8 = 2;
-    const CUSTOM_CHAR_DATA_WARNING: [u8; 8] = [
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00010101,
-        0b00000000,
-    ];
-
-    const CUSTOM_CHAR_INDEX_CURSOR_LEFT_WITH_WARNING: u8 = 3;
-    const CUSTOM_CHAR_DATA_CURSOR_LEFT_WITH_WARNING: [u8; 8] = [
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000100,
-        0b00010010,
-        0b00000001,
-    ];
-
-    const CUSTOM_CHAR_INDEX_CURSOR_RIGHT_WITH_WARNING: u8 = 4;
-    const CUSTOM_CHAR_DATA_CURSOR_RIGHT_WITH_WARNING: [u8; 8] = [
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000000,
-        0b00000100,
-        0b00001001,
-        0b00010000,
-    ];
-
-    const CUSTOM_CHAR_INDEX_MULTIPLY: u8 = 5;
-    const CUSTOM_CHAR_DATA_MULTIPLY: [u8; 8] = [
-        0b00000000,
-        0b00010001,
-        0b00001010,
-        0b00000100,
-        0b00001010,
-        0b00010001,
-        0b00000000,
-        0b00000000,
-    ];
 }
 
 impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
     fn init(&mut self) {
-        self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_CURSOR_LEFT, Self::CUSTOM_CHAR_DATA_CURSOR_LEFT, self.delay).unwrap();
-        self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT, Self::CUSTOM_CHAR_DATA_CURSOR_RIGHT, self.delay).unwrap();
-        self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_WARNING, Self::CUSTOM_CHAR_DATA_WARNING, self.delay).unwrap();
-        self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_CURSOR_LEFT_WITH_WARNING, Self::CUSTOM_CHAR_DATA_CURSOR_LEFT_WITH_WARNING, self.delay).unwrap();
-        self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT_WITH_WARNING, Self::CUSTOM_CHAR_DATA_CURSOR_RIGHT_WITH_WARNING, self.delay).unwrap();
-        self.lcd.set_custom_char(Self::CUSTOM_CHAR_INDEX_MULTIPLY, Self::CUSTOM_CHAR_DATA_MULTIPLY, self.delay).unwrap();
+        chars::CURSOR_LEFT.register(self);
+        chars::CURSOR_RIGHT.register(self);
+        chars::WARNING.register(self);
+        chars::CURSOR_LEFT_WITH_WARNING.register(self);
+        chars::CURSOR_RIGHT_WITH_WARNING.register(self);
+        chars::MULTIPLY.register(self);
         
         self.clear();
 
@@ -155,11 +168,11 @@ impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
 
     fn print_special(&mut self, character: DisplaySpecialCharacter) {
         let byte = match character {
-            DisplaySpecialCharacter::CursorLeft => Self::CUSTOM_CHAR_INDEX_CURSOR_LEFT,
-            DisplaySpecialCharacter::CursorRight => Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT,
-            DisplaySpecialCharacter::Warning => Self::CUSTOM_CHAR_INDEX_WARNING,
-            DisplaySpecialCharacter::CursorLeftWithWarning => Self::CUSTOM_CHAR_INDEX_CURSOR_LEFT_WITH_WARNING,
-            DisplaySpecialCharacter::CursorRightWithWarning => Self::CUSTOM_CHAR_INDEX_CURSOR_RIGHT_WITH_WARNING,
+            DisplaySpecialCharacter::CursorLeft => chars::CURSOR_LEFT.index,
+            DisplaySpecialCharacter::CursorRight => chars::CURSOR_RIGHT.index,
+            DisplaySpecialCharacter::Warning => chars::WARNING.index,
+            DisplaySpecialCharacter::CursorLeftWithWarning => chars::CURSOR_LEFT_WITH_WARNING.index,
+            DisplaySpecialCharacter::CursorRightWithWarning => chars::CURSOR_RIGHT_WITH_WARNING.index,
         };
         self.lcd.write_byte(byte, self.delay).unwrap();
     }
@@ -167,7 +180,7 @@ impl<'d> delta_radix_hal::Display for LcdDisplay<'d> {
     fn print_glyph(&mut self, glyph: Glyph) {
         self.print_char(
             match glyph {
-                Glyph::Multiply => Self::CUSTOM_CHAR_INDEX_MULTIPLY as char,
+                Glyph::Multiply => chars::MULTIPLY.index as char,
                 // Not aligned with baseline of other operators, but it'll do!
                 Glyph::Divide => 0b1111_1101 as char,
                 _ => glyph.char(),
