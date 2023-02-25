@@ -61,7 +61,7 @@ Shift > Menu shows a menu of meta options, such as entering the bootloader.
     built-in Rust parsing, don't calculate overflow)
 - [X] "Clear" key (shift + del?)
 - [ ] Variables
-- [ ] Parentheses
+- [X] Parentheses
 - [X] Scrolling expression input
 - [ ] Show result as if unsigned
 - [X] Sleep after inactivity
