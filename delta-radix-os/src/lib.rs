@@ -5,7 +5,6 @@
 extern crate alloc;
 
 pub mod calc;
-pub mod menu;
 
 use calc::frontend::CalculatorApplication;
 use delta_radix_hal::{Hal, Display};

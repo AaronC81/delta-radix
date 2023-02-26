@@ -1,15 +1,12 @@
 use alloc::string::ToString;
 use delta_radix_hal::{Hal, Key, Glyph};
 
-use crate::menu;
-
 use super::{CalculatorApplication, ApplicationState, Base};
 
 impl<'h, H: Hal> CalculatorApplication<'h, H> {
     pub async fn process_input_and_redraw(&mut self, key: Key) {
-        if menu::check_menu(self.hal, key, self.input_shifted).await {
-            self.draw_full();
-            return
+        if key == Key::DebugTerminate {
+            panic!("debug terminate");
         }
 
         match self.state {
@@ -50,6 +47,12 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                         Key::FormatSelect => {
                             self.input_shifted = false;
                             self.state = ApplicationState::OutputSignedMenu;
+                            self.draw_full();
+                        }
+
+                        Key::Menu => {
+                            self.input_shifted = false;
+                            self.state = ApplicationState::MainMenu;
                             self.draw_full();
                         }
 
@@ -219,6 +222,16 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                 Key::FormatSelect | Key::Menu | Key::Exe => {
                     self.state = ApplicationState::Normal;
                     self.clear_evaluation(true);
+                    self.draw_full();
+                }
+
+                _ => (),
+            }
+
+            ApplicationState::MainMenu => match key {
+                Key::Digit(1) => self.hal.enter_bootloader().await,
+                Key::Menu => {
+                    self.state = ApplicationState::Normal;
                     self.draw_full();
                 }
 

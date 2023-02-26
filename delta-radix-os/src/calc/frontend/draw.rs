@@ -58,6 +58,14 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                 display.print_string("  +) Unsigned");
                 if self.signed_result == Some(false) { display.print_string(" <"); }
             }
+
+            ApplicationState::MainMenu => {
+                let display = self.hal.display_mut();
+
+                display.clear();
+                display.set_position(0, 0);
+                display.print_string("1) Bootloader");            
+            }
         }
     }
     

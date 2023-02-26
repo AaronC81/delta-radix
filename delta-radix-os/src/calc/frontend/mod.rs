@@ -2,8 +2,6 @@ use alloc::{vec::Vec, vec, string::{ToString, String}, format};
 use delta_radix_hal::{Hal, Display, Keypad, Key, DisplaySpecialCharacter, Glyph};
 use flex_int::FlexInt;
 
-use crate::menu;
-
 use crate::calc::backend::{eval::{EvaluationResult, Configuration, DataType, evaluate}, parse::{Parser, Node, ParserError, NumberParser, ConstantOverflowChecker}};
 
 mod draw;
@@ -19,6 +17,7 @@ enum ApplicationState {
     },
     OutputSignedMenu,
     VariableSet,
+    MainMenu,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
