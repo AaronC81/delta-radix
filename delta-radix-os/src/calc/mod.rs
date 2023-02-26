@@ -254,45 +254,46 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
     fn draw_result(&mut self) {
         let disp = self.hal.display_mut();
 
-        let str;
-
         if self.state == ApplicationState::OutputBaseSelect {
-            str = "BASE?".to_string();
-        } else {
-            if let Some(result) = &self.eval_result {
-                match result {
-                    Ok(result) => {
-                        let signed = self.signed_result.unwrap_or(self.eval_config.data_type.signed);
-                        match self.output_format {
-                            Base::Decimal => {
-                                str = if signed {
-                                    result.result.to_signed_decimal_string()
-                                } else {
-                                    result.result.to_unsigned_decimal_string()
-                                };
-                            }
-                            Base::Hexadecimal => {
-                                str = format!("x{}", if signed {
-                                    result.result.to_signed_hex_string()
-                                } else {
-                                    result.result.to_unsigned_hex_string()
-                                });
-                            }
-                            Base::Binary => {
-                                str = format!("b{}", if signed {
-                                    result.result.to_signed_binary_string()
-                                } else {
-                                    result.result.to_unsigned_binary_string()
-                                });
-                            }
+            disp.set_position(0, 3);
+            disp.print_string("BASE? ");
+            return;
+        }
+
+        let str;
+        if let Some(result) = &self.eval_result {
+            match result {
+                Ok(result) => {
+                    let signed = self.signed_result.unwrap_or(self.eval_config.data_type.signed);
+                    match self.output_format {
+                        Base::Decimal => {
+                            str = if signed {
+                                result.result.to_signed_decimal_string()
+                            } else {
+                                result.result.to_unsigned_decimal_string()
+                            };
                         }
-                        
-                    },
-                    Err(e) => str = e.describe(),
-                }
-            } else {
-                str = str::repeat(" ", Self::WIDTH);
+                        Base::Hexadecimal => {
+                            str = format!("x{}", if signed {
+                                result.result.to_signed_hex_string()
+                            } else {
+                                result.result.to_unsigned_hex_string()
+                            });
+                        }
+                        Base::Binary => {
+                            str = format!("b{}", if signed {
+                                result.result.to_signed_binary_string()
+                            } else {
+                                result.result.to_unsigned_binary_string()
+                            });
+                        }
+                    }
+                    
+                },
+                Err(e) => str = e.describe(),
             }
+        } else {
+            str = str::repeat(" ", Self::WIDTH);
         }
 
         disp.set_position((Self::WIDTH - str.len()) as u8, 3);
