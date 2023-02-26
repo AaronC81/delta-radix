@@ -13,6 +13,8 @@ pub enum Glyph {
     HexBase,
     BinaryBase,
     DecimalBase,
+
+    Variable,
 }
 
 impl Glyph {
@@ -31,6 +33,8 @@ impl Glyph {
             Self::HexBase => "hex base",
             Self::BinaryBase => "bin base",
             Self::DecimalBase => "dec base",
+
+            Self::Variable => "variable",
         }
     }
 
@@ -49,6 +53,8 @@ impl Glyph {
             Glyph::HexBase => 'x',
             Glyph::BinaryBase => 'b',
             Glyph::DecimalBase => 'd',
+
+            Glyph::Variable => '?',
         }
     }
 }

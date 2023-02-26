@@ -10,6 +10,8 @@ pub enum Key {
     Multiply,
     Divide,
 
+    Variable,
+
     Left,
     Right,
     Delete,
@@ -43,6 +45,7 @@ impl Key {
             Key::FormatSelect => 0x10D,
             Key::DebugTerminate => 0x10E,
             Key::Sleep => 0x10F,
+            Key::Variable => 0x110,
         }
     }
 
@@ -64,6 +67,7 @@ impl Key {
             0x10D => Key::FormatSelect,
             0x10E => Key::DebugTerminate,
             0x10F => Key::Sleep,
+            0x110 => Key::Variable,
 
             _ => return None,
         })

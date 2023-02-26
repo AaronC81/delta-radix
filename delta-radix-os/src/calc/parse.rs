@@ -3,7 +3,7 @@ use core::{ops::Range, marker::PhantomData};
 use alloc::{vec, vec::Vec, string::{String, ToString}, boxed::Box, format};
 use delta_radix_hal::Glyph;
 
-use super::{eval::{self, DataType}, Base};
+use super::{eval::{self, DataType}, Base, VariableArray};
 use flex_int::FlexInt;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -63,6 +63,7 @@ pub enum ParserErrorKind {
     UnexpectedGlyph(Glyph),
     ExpectedParen,
     UnexpectedEnd,
+    InvalidVariable,
 }
 
 impl ParserErrorKind {
@@ -73,12 +74,14 @@ impl ParserErrorKind {
             ParserErrorKind::UnexpectedGlyph(g) => format!("unexpected {}", g.describe()),
             ParserErrorKind::ExpectedParen => "expected paren".to_string(),
             ParserErrorKind::UnexpectedEnd => "unexpected end".to_string(),
+            ParserErrorKind::InvalidVariable => "invalid variable".to_string(),
         }
     }
 }
 
-pub struct Parser<'g, N: NumberParser> {
+pub struct Parser<'g, 'v, N: NumberParser> {
     pub glyphs: &'g [Glyph],
+    pub variables: &'v VariableArray,
     pub ptr: usize,
     pub eval_config: eval::Configuration,
     pub constant_overflow_spans: Vec<GlyphSpan>,
@@ -87,10 +90,11 @@ pub struct Parser<'g, N: NumberParser> {
     _phantom: PhantomData<N>,
 }
 
-impl<'g, N: NumberParser> Parser<'g, N> {
-    pub fn new(glyphs: &'g [Glyph], eval_config: eval::Configuration) -> Self {
+impl<'g, 'v, N: NumberParser> Parser<'g, 'v, N> {
+    pub fn new(glyphs: &'g [Glyph], variables: &'v VariableArray, eval_config: eval::Configuration) -> Self {
         Parser {
             glyphs,
+            variables,
             ptr: 0,
             eval_config,
             constant_overflow_spans: vec![],
@@ -189,6 +193,36 @@ impl<'g, N: NumberParser> Parser<'g, N> {
             self.advance();
 
             return Ok(node);
+        }
+
+        // Check for variable
+        if let Some(Glyph::Variable) = self.here() {
+            // Figure out which variable we're using
+            self.advance();
+            let Some(Glyph::Digit(d)) = self.here() else {
+                return Err(self.create_error(ParserErrorKind::InvalidVariable.into()))
+            };
+            if d as usize >= self.variables.len() {
+                return Err(self.create_error(ParserErrorKind::InvalidVariable.into()))
+            };
+            self.advance();
+
+            // Parse its contents
+            let variable_glyphs = &self.variables[d as usize];
+            let mut variable_parser = Parser::<N>::new(
+                &variable_glyphs,
+                self.variables,
+                self.eval_config,
+            );
+            let variable_node = variable_parser.parse()?;
+
+            if !variable_parser.constant_overflow_spans.is_empty() {
+                self.constant_overflow_spans.push(GlyphSpan {
+                    start: self.ptr - 2, length: 2,
+                })
+            }
+
+            return Ok(variable_node);
         }
 
         // Number

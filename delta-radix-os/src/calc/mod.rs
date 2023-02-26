@@ -46,6 +46,10 @@ impl Base {
     }
 }
 
+// Variables are stored as sequences of glyphs rather than FlexInts, so that they continue working
+// across changes in data type
+pub type VariableArray = [Vec<Glyph>; 16];
+
 pub struct CalculatorApplication<'h, H: Hal> {
     hal: &'h mut H,
 
@@ -62,6 +66,8 @@ pub struct CalculatorApplication<'h, H: Hal> {
 
     eval_config: Configuration,
     eval_result: Option<Result<EvaluationResult, ParserError>>,
+
+    variables: VariableArray,
 }
 
 impl<'h, H: Hal> CalculatorApplication<'h, H> {
@@ -85,6 +91,11 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             },
             eval_result: None,
             constant_overflows: false,
+
+            // Variables are initially 0
+            variables: (0..16).into_iter()
+                .map(|_| vec![Glyph::Digit(0)])
+                .collect::<Vec<_>>().try_into().unwrap()
         }
     }
 
@@ -336,6 +347,9 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                         Key::Subtract => self.insert_and_redraw(Glyph::Subtract),
                         Key::Multiply => self.insert_and_redraw(Glyph::Multiply),
                         Key::Divide => self.insert_and_redraw(Glyph::Divide),
+
+                        // TODO: nicer insertion mechanism, and treat as one token?
+                        Key::Variable => self.insert_and_redraw(Glyph::Variable),
             
                         Key::Left => {
                             if self.cursor_pos > 0 {
@@ -494,7 +508,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
     }
 
     fn parse<N: NumberParser>(&self) -> (Parser<N>, Result<Node, ParserError>) {
-        let mut parser = Parser::new(&self.glyphs, self.eval_config);
+        let mut parser = Parser::new(&self.glyphs, &self.variables, self.eval_config);
         let result = parser.parse();
         (parser, result)
     }

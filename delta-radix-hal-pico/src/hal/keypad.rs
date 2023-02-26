@@ -131,6 +131,8 @@ impl<'d> ButtonMatrix<'d> {
 
             (3, 0) => Some(Key::Left),
             (4, 0) => Some(Key::Right),
+
+            (2, 0) => Some(Key::Variable),
             
             (0, 5) => Some(Key::Digit(0)),
             (0, 4) => Some(Key::Digit(1)),
