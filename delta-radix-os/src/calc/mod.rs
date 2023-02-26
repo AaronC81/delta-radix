@@ -18,6 +18,7 @@ enum ApplicationState {
         bits_cursor_pos: usize,
     },
     OutputSignedMenu,
+    VariableSet,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -111,7 +112,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
     fn draw_full(&mut self) {
         self.hal.display_mut().clear();
         match self.state {
-            ApplicationState::Normal | ApplicationState::OutputBaseSelect => {
+            ApplicationState::Normal | ApplicationState::OutputBaseSelect | ApplicationState::VariableSet => {
                 self.draw_header();
                 self.draw_expression();
                 self.draw_result();
@@ -260,41 +261,17 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             return;
         }
 
-        let str;
-        if let Some(result) = &self.eval_result {
-            match result {
-                Ok(result) => {
-                    let signed = self.signed_result.unwrap_or(self.eval_config.data_type.signed);
-                    match self.output_format {
-                        Base::Decimal => {
-                            str = if signed {
-                                result.result.to_signed_decimal_string()
-                            } else {
-                                result.result.to_unsigned_decimal_string()
-                            };
-                        }
-                        Base::Hexadecimal => {
-                            str = format!("x{}", if signed {
-                                result.result.to_signed_hex_string()
-                            } else {
-                                result.result.to_unsigned_hex_string()
-                            });
-                        }
-                        Base::Binary => {
-                            str = format!("b{}", if signed {
-                                result.result.to_signed_binary_string()
-                            } else {
-                                result.result.to_unsigned_binary_string()
-                            });
-                        }
-                    }
-                    
-                },
-                Err(e) => str = e.describe(),
-            }
-        } else {
-            str = str::repeat(" ", Self::WIDTH);
+        if self.state == ApplicationState::VariableSet {
+            disp.set_position(0, 3);
+            disp.print_string("SET? ");
+            return;
         }
+
+        // Briefly drop and re-borrow the display so we can call a method on `&self`
+        drop(disp);
+        let str = self.eval_result_to_string()
+            .unwrap_or_else(|| str::repeat(" ", Self::WIDTH));
+        let disp = self.hal.display_mut();
 
         disp.set_position((Self::WIDTH - str.len()) as u8, 3);
         disp.print_string(&str);
@@ -328,6 +305,17 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                             self.glyphs.insert(self.cursor_pos, Glyph::RightParen);
                             self.draw_expression();
                             self.clear_evaluation(true);
+                        }
+
+                        Key::Variable => {
+                            self.input_shifted = false;
+                            if let Some(Ok(_)) = self.eval_result {
+                                self.state = ApplicationState::VariableSet;
+                                self.draw_header();
+                                self.draw_result();
+                            } else {
+                                self.draw_full();
+                            }
                         }
 
                         Key::FormatSelect => {
@@ -410,6 +398,22 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                 Key::HexBase => self.set_output_format_and_redraw(Base::Hexadecimal),
                 Key::BinaryBase => self.set_output_format_and_redraw(Base::Binary),
                 Key::FormatSelect => self.set_output_format_and_redraw(Base::Decimal),
+
+                _ => (),
+            }
+
+            ApplicationState::VariableSet => match key {
+                Key::Digit(d) => {
+                    self.variables[d as usize] = Glyph::from_string(&self.eval_result_to_string().unwrap()).unwrap();
+
+                    self.state = ApplicationState::Normal;
+                    self.draw_full();
+                },
+
+                Key::Exe | Key::Variable => {
+                    self.state = ApplicationState::Normal;
+                    self.draw_full();
+                }
 
                 _ => (),
             }
@@ -546,5 +550,40 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
         if self.cursor_pos == self.scroll_offset + Self::WIDTH {
             self.scroll_offset += 1;
         }
+    }
+
+    fn eval_result_to_string(&self) -> Option<String> {
+        let Some(ref result) = self.eval_result else { return None };
+
+        Some(match result {
+            Ok(result) => {
+                let signed = self.signed_result.unwrap_or(self.eval_config.data_type.signed);
+                match self.output_format {
+                    Base::Decimal => {
+                        if signed {
+                            result.result.to_signed_decimal_string()
+                        } else {
+                            result.result.to_unsigned_decimal_string()
+                        }
+                    }
+                    Base::Hexadecimal => {
+                        format!("x{}", if signed {
+                            result.result.to_signed_hex_string()
+                        } else {
+                            result.result.to_unsigned_hex_string()
+                        })
+                    }
+                    Base::Binary => {
+                        format!("b{}", if signed {
+                            result.result.to_signed_binary_string()
+                        } else {
+                            result.result.to_unsigned_binary_string()
+                        })
+                    }
+                }
+                
+            },
+            Err(e) => e.describe(),
+        })
     }
 }

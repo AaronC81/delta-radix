@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Glyph {
     Digit(u8),
@@ -56,6 +58,33 @@ impl Glyph {
 
             Glyph::Variable => '?',
         }
+    }
+
+    pub fn from_char(c: char) -> Option<Glyph> {
+        Some(match c {
+            _ if char::to_digit(c, 16).is_some()
+                => Glyph::Digit(char::to_digit(c, 16).unwrap() as u8),
+    
+            '+' => Glyph::Add,
+            '-' => Glyph::Subtract,
+            '*' => Glyph::Multiply,
+            '÷' => Glyph::Divide,
+
+            '(' => Glyph::LeftParen,
+            ')' => Glyph::RightParen,
+
+            'x' => Glyph::HexBase,
+            'b' => Glyph::BinaryBase,
+            'd' => Glyph::DecimalBase,
+
+            '?' => Glyph::Variable,
+
+            _ => return None,
+        })
+    }
+
+    pub fn from_string(s: &str) -> Option<Vec<Glyph>> {
+        s.chars().map(Glyph::from_char).collect()
     }
 }
 
