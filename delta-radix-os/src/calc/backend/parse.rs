@@ -3,7 +3,8 @@ use core::{ops::Range, marker::PhantomData};
 use alloc::{vec, vec::Vec, string::{String, ToString}, boxed::Box, format};
 use delta_radix_hal::Glyph;
 
-use super::{eval::{self, DataType}, Base, VariableArray};
+use super::eval;
+use crate::calc::frontend::{Base, VariableArray};
 use flex_int::FlexInt;
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
