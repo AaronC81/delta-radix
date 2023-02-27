@@ -62,6 +62,10 @@ impl Glyph {
 
     pub fn from_char(c: char) -> Option<Glyph> {
         Some(match c {
+            'x' => Glyph::HexBase,
+            'b' => Glyph::BinaryBase,
+            'd' => Glyph::DecimalBase,
+
             _ if char::to_digit(c, 16).is_some()
                 => Glyph::Digit(char::to_digit(c, 16).unwrap() as u8),
     
@@ -72,10 +76,6 @@ impl Glyph {
 
             '(' => Glyph::LeftParen,
             ')' => Glyph::RightParen,
-
-            'x' => Glyph::HexBase,
-            'b' => Glyph::BinaryBase,
-            'd' => Glyph::DecimalBase,
 
             '?' => Glyph::Variable,
 
