@@ -179,7 +179,19 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             .unwrap_or_else(|| str::repeat(" ", Self::WIDTH));
         let disp = self.hal.display_mut();
 
-        disp.set_position((Self::WIDTH - str.len()) as u8, 3);
-        disp.print_string(&str);
+        // Handle when result is longer than the screen
+        let (x, break_early) = if str.len() > 20 {
+            (0, true)
+        } else {
+            (Self::WIDTH - str.len(), false)
+        };
+        disp.set_position(x as u8, 3);
+
+        if break_early {
+            disp.print_string(&str[..Self::WIDTH - 1]);
+            disp.print_string(">");
+        } else {
+            disp.print_string(&str);
+        }
     }
 }
