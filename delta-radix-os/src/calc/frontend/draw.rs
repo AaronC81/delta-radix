@@ -1,5 +1,5 @@
 use alloc::vec::Vec;
-use delta_radix_hal::{Hal, Display, DisplaySpecialCharacter};
+use delta_radix_hal::{Hal, Display, DisplaySpecialCharacter, Glyph};
 
 use crate::calc::backend::parse::ConstantOverflowChecker;
 
@@ -63,8 +63,30 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                 let display = self.hal.display_mut();
 
                 display.clear();
-                display.set_position(0, 0);
-                display.print_string("1) Bootloader");            
+                display.print_string("  1) Variables");
+                display.set_position(0, 3);
+                display.print_string("DEL) Bootloader");            
+            }
+
+            ApplicationState::VariableView { page } => {
+                let display = self.hal.display_mut();
+                let start = page * 4;
+
+                display.clear();
+                for i in start..(start + 4) {
+                    display.set_position(0, i - start);
+                    display.print_glyph(Glyph::Digit(i));
+                    display.print_char('=');
+
+                    let var_glyphs = &self.variables[i as usize];
+                    for g in 2..Self::WIDTH {
+                        if g + 1 == Self::WIDTH && var_glyphs.len() > Self::WIDTH - 2 {
+                            display.print_char('>')
+                        } else if g < var_glyphs.len() {
+                            display.print_glyph(var_glyphs[g - 2])
+                        }
+                    }
+                }
             }
         }
     }

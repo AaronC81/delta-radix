@@ -229,9 +229,32 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             }
 
             ApplicationState::MainMenu => match key {
-                Key::Digit(1) => self.hal.enter_bootloader().await,
+                Key::Digit(1) => {
+                    self.state = ApplicationState::VariableView { page: 0 };
+                    self.draw_full();
+                }
+                Key::Delete => self.hal.enter_bootloader().await,
                 Key::Menu => {
                     self.state = ApplicationState::Normal;
+                    self.draw_full();
+                }
+
+                _ => (),
+            }
+
+            ApplicationState::VariableView { ref mut page } => match key {
+                Key::Left if *page > 0 => {
+                    *page -= 1;
+                    self.draw_full();
+                }
+                Key::Right if *page < 3 => {
+                    *page += 1;
+                    self.draw_full();
+                }
+
+                Key::FormatSelect | Key::Menu | Key::Exe => {
+                    self.state = ApplicationState::Normal;
+                    self.clear_evaluation(true);
                     self.draw_full();
                 }
 

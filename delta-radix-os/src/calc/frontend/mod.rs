@@ -17,6 +17,9 @@ enum ApplicationState {
     },
     OutputSignedMenu,
     VariableSet,
+    VariableView {
+        page: u8,
+    },
     MainMenu,
 }
 
