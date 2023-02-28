@@ -1,4 +1,4 @@
-use alloc::vec::Vec;
+use alloc::{vec::Vec, string::{String, ToString}};
 use delta_radix_hal::{Hal, Display, DisplaySpecialCharacter, Glyph};
 
 use crate::calc::backend::parse::ConstantOverflowChecker;
@@ -92,6 +92,8 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
     }
     
     pub fn draw_header(&mut self) {
+        let has_overflow = self.eval_result_has_overflow();
+
         let disp = self.hal.display_mut();
         disp.set_position(0, 0);
 
@@ -107,11 +109,6 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
         disp.print_char(' ');
 
-        let has_overflow = if let Some(Ok(r)) = &self.eval_result {
-            r.overflow || self.constant_overflows
-        } else {
-            false
-        };
         let overflow_marker = " OVER";
 
         let mut ptr = format_len + 1;
@@ -181,6 +178,8 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
     }
 
     pub fn draw_result(&mut self) {
+        let has_overflow = self.eval_result_has_overflow();
+
         let disp = self.hal.display_mut();
 
         if self.state == ApplicationState::OutputBaseSelect {
@@ -197,23 +196,65 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
         // Briefly drop and re-borrow the display so we can call a method on `&self`
         drop(disp);
-        let str = self.eval_result_to_string()
+        let mut str = self.eval_result_to_string()
             .unwrap_or_else(|| str::repeat(" ", Self::WIDTH));
         let disp = self.hal.display_mut();
 
-        // Handle when result is longer than the screen
-        let (x, break_early) = if str.len() > 20 {
-            (0, true)
-        } else {
-            (Self::WIDTH - str.len(), false)
-        };
-        disp.set_position(x as u8, 3);
-
-        if break_early {
-            disp.print_string(&str[..Self::WIDTH - 1]);
-            disp.print_string(">");
-        } else {
+        // Alright, how long is this result?
+        // We can activate ***BIG MODE*** if it's longer than a line
+        if str.len() <= Self::WIDTH {
+            // Cool, it fits on a line! This should be the average case
+            disp.set_position((Self::WIDTH - str.len()) as u8, 3);
             disp.print_string(&str);
+        } else if str.len() <= Self::WIDTH * 3 {
+            // It fits on three lines... we can leave just the header
+            // (Add a marker to the header to say we did this, though)
+            disp.set_position(7, 0);
+            disp.print_string(" BIG ");
+            disp.set_position(0, 1);
+
+            for y in 1..=3 {
+                disp.set_position(0, y);
+                disp.print_string(&str::repeat(" ", Self::WIDTH));    
+            }
+
+            for (i, line) in str.chars().collect::<Vec<_>>().chunks(20).enumerate() {
+                disp.set_position(0, i as u8 + 1);
+                disp.print_string(&line.iter().collect::<String>());
+            }
+        } else if !has_overflow && str.len() <= Self::WIDTH * 4 {
+            // If there's no overflow, we can occupy the entire screen with the result
+            for y in 0..=3 {
+                disp.set_position(0, y);
+                disp.print_string(&str::repeat(" ", Self::WIDTH));    
+            }
+
+            disp.set_position(0, 0);
+            for (i, line) in str.chars().collect::<Vec<_>>().chunks(Self::WIDTH).enumerate() {
+                disp.set_position(0, i as u8);
+                disp.print_string(&line.iter().collect::<String>());
+            }
+        } else if has_overflow && str.len() <= Self::WIDTH * 4 - 5 {
+            // If there's overflow, we can occupy almost the entire screen but must account for an
+            // "OVER " marker
+            for y in 0..=3 {
+                disp.set_position(0, y);
+                disp.print_string(&str::repeat(" ", Self::WIDTH));    
+            }
+
+            str = ["OVER ".to_string(), str.clone()].join("");
+            disp.set_position(0, 0);
+            for line in str.chars().collect::<Vec<_>>().chunks(Self::WIDTH) {
+                disp.print_string(&line.iter().collect::<String>());
+            }
+        } else {
+            // Nothing will fit!
+            let message = "result too wide :(";
+            disp.set_position((Self::WIDTH - message.len()) as u8, 3);
+            disp.print_string(message);
         }
+    }
+
+    fn clear_row(disp: &mut impl Display, y: u8) {
     }
 }

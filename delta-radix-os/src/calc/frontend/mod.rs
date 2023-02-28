@@ -198,4 +198,12 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
             Err(e) => e.describe(),
         })
     }
+
+    fn eval_result_has_overflow(&self) -> bool {
+        if let Some(Ok(r)) = &self.eval_result {
+            r.overflow || self.constant_overflows
+        } else {
+            false
+        }
+    }
 }

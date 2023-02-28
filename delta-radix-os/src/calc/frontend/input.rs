@@ -76,12 +76,14 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                             if self.cursor_pos > 0 {
                                 self.cursor_pos -= 1;
                                 self.draw_expression();
+                                self.clear_evaluation(true);
                             }
                         },
                         Key::Right => {
                             if self.cursor_pos < self.glyphs.len() {
                                 self.cursor_pos += 1;
                                 self.draw_expression();
+                                self.clear_evaluation(true);
                             }
                         }
                         Key::Delete => {
@@ -94,13 +96,13 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                         },
                         Key::Exe => {
                             self.evaluate();
-                            self.draw_result();
                             self.draw_header();
+                            self.draw_result();
                         }
 
                         Key::FormatSelect => {
                             self.state = ApplicationState::OutputBaseSelect;
-                            self.draw_result();
+                            self.draw_full(); // May change "big mode" state, so redraw everything
                         }
             
                         Key::Shift => {
