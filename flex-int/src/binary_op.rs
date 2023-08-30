@@ -338,4 +338,24 @@ impl FlexInt {
             (result, over_1 || over_2)
         }
     }
+
+    /// Performs bitwise AND on the bits of this number and another.
+    /// 
+    /// Panics unless the two integers are the same size.
+    /// 
+    /// ```rust
+    /// # use flex_int::FlexInt;
+    /// let a = FlexInt::from_int(0b10110111, 8);
+    /// let b = FlexInt::from_int(0b01100110, 8);
+    /// assert_eq!(a.bitwise_and(&b), FlexInt::from_int(0b00100110, 8));
+    /// ```
+    pub fn bitwise_and(&self, other: &FlexInt) -> FlexInt {
+        self.validate_size(other);
+        
+        let mut result = FlexInt::new(self.size());
+        for i in 0..self.size() {
+            result.bits[i] = self.bits[i] && other.bits[i];
+        }
+        result
+    }
 }

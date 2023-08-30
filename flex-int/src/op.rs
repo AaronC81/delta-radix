@@ -163,6 +163,48 @@ impl FlexInt {
         }
     }
 
+    /// Treating this number as unsigned, increases it to reach the closest multiple of the given
+    /// boundary.
+    /// 
+    /// The provided boundary must be a power of 2. Returns `None` if it is not.
+    /// 
+    /// ```rust
+    /// # use flex_int::FlexInt;
+    /// // Standard
+    /// let x = FlexInt::from_int(0xC2, 8);
+    /// let boundary = FlexInt::from_int(0x10, 8);
+    /// assert_eq!(x.align(&boundary), Some((FlexInt::from_int(0xD0, 8), false)));
+    /// 
+    /// // Overflow
+    /// let y = FlexInt::from_int(0xF5, 8);
+    /// assert_eq!(y.align(&boundary), Some((FlexInt::from_int(0x00, 8), true)));
+    /// 
+    /// // Invalid base
+    /// let invalid_boundary = FlexInt::from_int(9, 8);
+    /// assert_eq!(y.align(&invalid_boundary), None);
+    /// ```
+    pub fn align(&self, boundary: &FlexInt) -> Option<(FlexInt, bool)> {
+        self.validate_size(boundary);
+
+        // Check that the boundary is a power of 2 - it should contain a single 1 digit
+        let mut ones = 0;
+        for bit in boundary.bits() {
+            if *bit {
+                ones += 1;
+            }
+        }
+        if ones != 1 {
+            return None
+        }
+
+        // Formula: https://stackoverflow.com/a/45213645/2626000
+        let (boundary_minus_one, over_1) = boundary.subtract(&FlexInt::new_one(self.size()), false);
+        let (operand_plus_boundary_minus_one, over_2) = self.add(&boundary_minus_one, false);
+        let result = operand_plus_boundary_minus_one.bitwise_and(&boundary_minus_one.invert());
+
+        Some((result, over_1 || over_2))
+    }
+
     pub(crate) fn pop_shift_left(&self, amount: usize) -> (Self, Vec<bool>) {
         let mut bits = self.bits.clone();
         let mut popped = vec![];
