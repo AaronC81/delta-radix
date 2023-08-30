@@ -43,6 +43,8 @@ pub enum NodeKind {
     Subtract(Box<Node>, Box<Node>),
     Divide(Box<Node>, Box<Node>),
     Multiply(Box<Node>, Box<Node>),
+
+    Align(Box<Node>, Box<Node>),
 }
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -137,7 +139,23 @@ impl<'g, 'v, N: NumberParser> Parser<'g, 'v, N> {
     }
 
     fn parse_top_level(&mut self) -> Result<Node, ParserError> {
-        self.parse_add_sub()
+        self.parse_align()
+    }
+
+    fn parse_align(&mut self) -> Result<Node, ParserError> {
+        let mut current = self.parse_add_sub()?;
+
+        while let Some(Glyph::Align) = self.here() {
+            self.advance();
+            let rhs = self.parse_add_sub()?;
+            let span = current.span.merge(rhs.span);
+            current = Node {
+                span,
+                kind: NodeKind::Align(Box::new(current), Box::new(rhs))
+            };
+        }
+
+        Ok(current)
     }
 
     fn parse_add_sub(&mut self) -> Result<Node, ParserError> {

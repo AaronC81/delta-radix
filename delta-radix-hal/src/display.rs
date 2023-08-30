@@ -9,6 +9,8 @@ pub enum Glyph {
     Multiply,
     Divide,
 
+    Align,
+
     LeftParen,
     RightParen,
 
@@ -29,6 +31,8 @@ impl Glyph {
             Self::Multiply => "multiply",
             Self::Divide => "divide",
 
+            Self::Align => "align",
+
             Self::LeftParen => "l-paren",
             Self::RightParen => "r-paren",
 
@@ -48,6 +52,8 @@ impl Glyph {
             Glyph::Subtract => '-',
             Glyph::Multiply => '*',
             Glyph::Divide => '÷',
+
+            Glyph::Align => '>',
 
             Glyph::LeftParen => '(',
             Glyph::RightParen => ')',

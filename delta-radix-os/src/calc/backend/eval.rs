@@ -39,8 +39,9 @@ pub fn evaluate(node: &Node, config: &Configuration) -> EvaluationResult {
         NodeKind::Add(a, b)
         | NodeKind::Subtract(a, b)
         | NodeKind::Divide(a, b)
-        | NodeKind::Multiply(a, b) => {
-            let a = evaluate(a, config);
+        | NodeKind::Multiply(a, b)
+        | NodeKind::Align(a, b) => {
+            let a: EvaluationResult = evaluate(a, config);
             let b = evaluate(b, config);
 
             let (result, overflow) = match &node.kind {
@@ -48,6 +49,7 @@ pub fn evaluate(node: &Node, config: &Configuration) -> EvaluationResult {
                 NodeKind::Subtract(_, _) => a.result.subtract(&b.result, config.data_type.signed),
                 NodeKind::Multiply(_, _) => a.result.multiply(&b.result, config.data_type.signed),
                 NodeKind::Divide(_, _) => a.result.divide(&b.result, config.data_type.signed),
+                NodeKind::Align(_, _) => a.result.align(&b.result).expect("not power of 2"), // TODO: handle!
                 _ => unreachable!()
             };
 

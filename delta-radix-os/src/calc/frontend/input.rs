@@ -33,6 +33,11 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
                             self.clear_evaluation(true);
                         }
 
+                        Key::Right => {
+                            self.input_shifted = false;
+                            self.glyphs.insert(self.cursor_pos, Glyph::Align);
+                        }
+
                         Key::Variable => {
                             self.input_shifted = false;
                             if let Some(Ok(_)) = self.eval_result {
