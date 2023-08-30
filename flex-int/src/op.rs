@@ -163,46 +163,51 @@ impl FlexInt {
         }
     }
 
-    /// Treating this number as unsigned, increases it to reach the closest multiple of the given
-    /// boundary.
-    /// 
-    /// The provided boundary must be a power of 2. Returns `None` if it is not.
+    /// Increases a number to reach the closest multiple of the given boundary.
     /// 
     /// ```rust
     /// # use flex_int::FlexInt;
-    /// // Standard
-    /// let x = FlexInt::from_int(0xC2, 8);
+    /// // Power of 2
+    /// let a = FlexInt::from_int(0xC2, 8);
     /// let boundary = FlexInt::from_int(0x10, 8);
-    /// assert_eq!(x.align(&boundary), Some((FlexInt::from_int(0xD0, 8), false)));
+    /// assert_eq!(a.align(&boundary, false), (FlexInt::from_int(0xD0, 8), false));
     /// 
     /// // Overflow
-    /// let y = FlexInt::from_int(0xF5, 8);
-    /// assert_eq!(y.align(&boundary), Some((FlexInt::from_int(0x00, 8), true)));
+    /// let b = FlexInt::from_int(0xF5, 8);
+    /// assert_eq!(b.align(&boundary, false), (FlexInt::from_int(0x00, 8), true));
     /// 
-    /// // Invalid base
-    /// let invalid_boundary = FlexInt::from_int(9, 8);
-    /// assert_eq!(y.align(&invalid_boundary), None);
+    /// // Non-power of 2
+    /// let c = FlexInt::from_int(214, 8);
+    /// let ten = FlexInt::from_int(10, 8);
+    /// assert_eq!(c.align(&ten, false), (FlexInt::from_int(220, 8), false));
+    /// 
+    /// // Signed values
+    /// let d = FlexInt::from_signed_decimal_string("-14", 8).unwrap().0;
+    /// assert_eq!(d.align(&ten, true), (FlexInt::from_signed_decimal_string("-10", 8).unwrap().0, false));
     /// ```
-    pub fn align(&self, boundary: &FlexInt) -> Option<(FlexInt, bool)> {
+    pub fn align(&self, boundary: &FlexInt, signed: bool) -> (FlexInt, bool) {
         self.validate_size(boundary);
 
-        // Check that the boundary is a power of 2 - it should contain a single 1 digit
-        let mut ones = 0;
-        for bit in boundary.bits() {
-            if *bit {
-                ones += 1;
-            }
-        }
-        if ones != 1 {
-            return None
+        // Formula: https://gist.github.com/aslakhellesoy/1134482
+        let intermediate_value;
+        let intermediate_overflow;
+        if signed && self.is_negative() {
+            // intermediate = operand
+            intermediate_value = self.clone();
+            intermediate_overflow = false;
+        } else {
+            // intermediate = operand + boundary - 1
+            let (operand_plus_boundary, over_1) = self.add(boundary, signed);
+            let (operand_plus_boundary_minus_one, over_2) = operand_plus_boundary.subtract(&FlexInt::new_one(self.size()), signed);
+            intermediate_value = operand_plus_boundary_minus_one;
+            intermediate_overflow = over_1 || over_2;
         }
 
-        // Formula: https://stackoverflow.com/a/45213645/2626000
-        let (boundary_minus_one, over_1) = boundary.subtract(&FlexInt::new_one(self.size()), false);
-        let (operand_plus_boundary_minus_one, over_2) = self.add(&boundary_minus_one, false);
-        let result = operand_plus_boundary_minus_one.bitwise_and(&boundary_minus_one.invert());
+        // (intermediate / boundary) * boundary
+        let (inter_div_boundary, over_1) = intermediate_value.divide(boundary, signed);
+        let (result, over_2) = inter_div_boundary.multiply(&boundary, signed);
 
-        Some((result, over_1 || over_2))
+        (result, intermediate_overflow || over_1 || over_2)
     }
 
     pub(crate) fn pop_shift_left(&self, amount: usize) -> (Self, Vec<bool>) {

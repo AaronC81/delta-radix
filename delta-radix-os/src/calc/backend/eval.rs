@@ -49,7 +49,7 @@ pub fn evaluate(node: &Node, config: &Configuration) -> EvaluationResult {
                 NodeKind::Subtract(_, _) => a.result.subtract(&b.result, config.data_type.signed),
                 NodeKind::Multiply(_, _) => a.result.multiply(&b.result, config.data_type.signed),
                 NodeKind::Divide(_, _) => a.result.divide(&b.result, config.data_type.signed),
-                NodeKind::Align(_, _) => a.result.align(&b.result).expect("not power of 2"), // TODO: handle!
+                NodeKind::Align(_, _) => a.result.align(&b.result, config.data_type.signed),
                 _ => unreachable!()
             };
 
