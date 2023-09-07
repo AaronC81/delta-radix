@@ -35,7 +35,7 @@ impl<'h, H: Hal> CalculatorApplication<'h, H> {
 
                         Key::Right => {
                             self.input_shifted = false;
-                            self.glyphs.insert(self.cursor_pos, Glyph::Align);
+                            self.insert_and_redraw(Glyph::Align);
                         }
 
                         Key::Variable => {
