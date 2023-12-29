@@ -29,6 +29,13 @@ This repository is a Cargo workspace comprising a handful of crates. These are:
 
 The HAL implementations are the executable targets which should be flashed/run.
 
+Elsewhere, you'll also find:
+
+- [`delta-radix-numworks`](https://github.com/AaronC81/delta-radix-numworks) - Implementation of HAL
+  traits for an app on the NumWorks graphing calculator.
+  - This is a separate repository because it's not a pure-Cargo project, rather a Rust static
+    library linked against a supporting C binary.
+
 ## Hardware
 
 `hardware/` contains a KiCad schematic and PCB design.
